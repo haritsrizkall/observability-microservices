@@ -1,0 +1,36 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    container_name: mysqldb-skripsi
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: auth-skripsi
+      MYSQL_PASSWORD: auth123
+    ports:
+      - 3306:3306
+    volumes:
+      - ./db:/var/lib/mysql
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    container_name: phpmyadmin-skripsi
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - 8080:80
+    depends_on:
+      - db
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    hostname: localhost
+    container_name: jaeger-skripsi
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+    ports:
+      - 16686:16686
+      - 14268:14268
