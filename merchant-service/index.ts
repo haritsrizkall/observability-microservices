@@ -1,3 +1,7 @@
+import { init } from './pkg/tracer';
+
+init('merchant-service', 'development');
+
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
