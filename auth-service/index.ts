@@ -8,12 +8,32 @@ import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import jsonwebtoken from 'jsonwebtoken';
+import opentelemetry from '@opentelemetry/api';
+import { MeterProvider } from '@opentelemetry/sdk-metrics';
+import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
+
+const { endpoint, port } = PrometheusExporter.DEFAULT_OPTIONS;
+const exporter = new PrometheusExporter({}, () => {
+  console.log(
+    `prometheus scrape endpoint: http://localhost:${port}${endpoint}`,
+  );
+});
+
+// Creates MeterProvider and installs the exporter as a MetricReader
+const meterProvider = new MeterProvider();
+meterProvider.addMetricReader(exporter);
+const meter = meterProvider.getMeter('example-prometheus');
+
+const loginCounter = meter.createCounter('login', {
+  description: 'Login Counter',
+});
+
 
 dotenv.config();
 
 
 const app: Express = express();
-const port = process.env.PORT ?? 3000;
+const portExpress = process.env.PORT ?? 3000;
 const prisma = new PrismaClient();
 
 
@@ -78,6 +98,10 @@ const loginInput = z.object({
 
 apiRouter.post('/login', async (req: Request, res: Response) => {
   try {
+    loginCounter.add(1, {
+      email: req.body.email,
+      password: req.body.password,
+    });
     const { email, password } = req.body
     await loginInput.parseAsync({
       email,
@@ -272,6 +296,6 @@ apiRouter.get('/users/:id', async (req: Request, res: Response) => {
 app.use('/api/auth', apiRouter);
 
 
-app.listen(port, () => {
-  console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
+app.listen(portExpress, () => {
+  console.log(`⚡️[server]: Server is running at http://localhost:${portExpress}`);
 });

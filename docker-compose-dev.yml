@@ -34,3 +34,14 @@ services:
     ports:
       - 16686:16686
       - 14268:14268
+  prometheus:
+   image: prom/prometheus
+   container_name: prometheus
+   volumes:
+     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+     - ./prometheus/data:/prometheus
+   ports:
+     - 9090:9090
+   command: 
+     - '--config.file=/etc/prometheus/prometheus.yml'
+     - '--storage.tsdb.path=/prometheus'
