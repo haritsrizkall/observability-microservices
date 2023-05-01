@@ -147,6 +147,37 @@ apiRouter.get('/products', (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
     }
 }));
+apiRouter.get('/products/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const product = yield prisma.product.findUnique({
+            where: {
+                id: Number(id),
+            },
+            include: {
+                category: true,
+            },
+        });
+        // const merchantResp = await MerchantService.getById(product?.merchantId, );
+        return res.status(200).json({
+            message: 'Product fetched successfully',
+            data: product,
+        });
+    }
+    catch (err) {
+        if (err instanceof zod_1.z.ZodError) {
+            console.log(err);
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: err.errors,
+            });
+        }
+        return res.status(500).json({
+            message: 'Internal Server Error',
+            errors: err,
+        });
+    }
+}));
 app.use('/api/catalog', apiRouter);
 app.listen(port, () => {
     console.log(`⚡️[server]: Server is running at http://localhost:${port}`);

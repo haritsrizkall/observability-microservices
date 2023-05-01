@@ -200,6 +200,49 @@ apiRouter.get('/merchants/:id', (req, res) => __awaiter(void 0, void 0, void 0, 
         });
     }
 }));
+apiRouter.get('/public/merchants/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        let merchantPrism = yield prisma.merchant.findUnique({
+            where: {
+                id: Number(id),
+            },
+            select: {
+                id: true,
+                name: true,
+                levelId: true,
+                level: {
+                    select: {
+                        id: true,
+                        name: true,
+                    }
+                }
+            },
+        });
+        if (!merchantPrism) {
+            return res.status(404).json({
+                message: 'Merchant not found',
+            });
+        }
+        return res.status(200).json({
+            message: 'Merchant fetched successfully',
+            data: merchantPrism,
+        });
+    }
+    catch (err) {
+        if (err instanceof zod_1.z.ZodError) {
+            console.log(err);
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: err.errors,
+            });
+        }
+        return res.status(500).json({
+            message: 'Internal Server Error',
+            errors: err,
+        });
+    }
+}));
 app.use('/api/merchant', apiRouter);
 app.listen(port, () => {
     console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
