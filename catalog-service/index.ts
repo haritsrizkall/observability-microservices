@@ -171,10 +171,15 @@ apiRouter.get('/products/:id', async (req: Request, res: Response) => {
         category: true,
       },
     });
-    // const merchantResp = await MerchantService.getById(product?.merchantId, );
+    const merchantResp = await MerchantService.getByIdPublic(product?.merchantId ?? 0);
+    const merchant = merchantResp.data.data as Merchant;
+    const productWithMerchant = {
+      ...product,
+      merchant: merchant,
+    }
     return res.status(200).json({
       message: 'Product fetched successfully',
-      data: product,
+      data: productWithMerchant,
     });
   } catch (err) {
     if (err instanceof z.ZodError) {

@@ -34,6 +34,10 @@ const MerchantService = {
             },
         });
         return response;
+    }),
+    getByIdPublic: (id) => __awaiter(void 0, void 0, void 0, function* () {
+        const response = yield axios_1.default.get(`${API_URL}/public/merchants/${id}`);
+        return response;
     })
 };
 exports.default = MerchantService;

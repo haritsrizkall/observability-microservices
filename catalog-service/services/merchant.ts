@@ -22,8 +22,11 @@ const MerchantService = {
             },
         });
         return response;
+    },
+    getByIdPublic: async (id: number) => {
+        const response = await axios.get(`${API_URL}/public/merchants/${id}`);
+        return response;
     }
-
 }
 
 export default MerchantService;

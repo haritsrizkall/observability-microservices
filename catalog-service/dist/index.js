@@ -148,6 +148,7 @@ apiRouter.get('/products', (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 }));
 apiRouter.get('/products/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c;
     try {
         const { id } = req.params;
         const product = yield prisma.product.findUnique({
@@ -158,10 +159,12 @@ apiRouter.get('/products/:id', (req, res) => __awaiter(void 0, void 0, void 0, f
                 category: true,
             },
         });
-        // const merchantResp = await MerchantService.getById(product?.merchantId, );
+        const merchantResp = yield merchant_1.default.getByIdPublic((_c = product === null || product === void 0 ? void 0 : product.merchantId) !== null && _c !== void 0 ? _c : 0);
+        const merchant = merchantResp.data.data;
+        const productWithMerchant = Object.assign(Object.assign({}, product), { merchant: merchant });
         return res.status(200).json({
             message: 'Product fetched successfully',
-            data: product,
+            data: productWithMerchant,
         });
     }
     catch (err) {
