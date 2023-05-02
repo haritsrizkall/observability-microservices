@@ -160,6 +160,41 @@ apiRouter.get('/products', async (req: Request, res: Response) => {
   }
 });
 
+apiRouter.get('/products/in', async (req: Request, res: Response) => {
+  try {
+    let { ids } = req.query;
+    // convert to number of array
+    const idsArr = (ids as string).split(',').map((id: string) => Number(id));
+    const products = await prisma.product.findMany({
+      where: {
+        id: {
+          in: idsArr,
+        },
+      },
+      include: {
+        category: true,
+      },
+    });
+    return res.status(200).json({
+      message: 'Products fetched successfully',
+      data: products,
+    });
+  }catch (err) {
+    if (err instanceof z.ZodError) {
+      console.log(err);
+      return res.status(400).json({ 
+        message: "Bad Request",
+        errors: err.errors,
+       });
+    }
+    return  res.status(500).json({
+      message: 'Internal Server Error',
+      errors: err,
+    });
+  }
+
+});
+
 apiRouter.get('/products/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -195,6 +230,8 @@ apiRouter.get('/products/:id', async (req: Request, res: Response) => {
     });
   }
 });
+
+
 
 
 app.use('/api/catalog', apiRouter);

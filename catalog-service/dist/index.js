@@ -147,6 +147,40 @@ apiRouter.get('/products', (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
     }
 }));
+apiRouter.get('/products/in', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let { ids } = req.query;
+        // convert to number of array
+        const idsArr = ids.split(',').map((id) => Number(id));
+        const products = yield prisma.product.findMany({
+            where: {
+                id: {
+                    in: idsArr,
+                },
+            },
+            include: {
+                category: true,
+            },
+        });
+        return res.status(200).json({
+            message: 'Products fetched successfully',
+            data: products,
+        });
+    }
+    catch (err) {
+        if (err instanceof zod_1.z.ZodError) {
+            console.log(err);
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: err.errors,
+            });
+        }
+        return res.status(500).json({
+            message: 'Internal Server Error',
+            errors: err,
+        });
+    }
+}));
 apiRouter.get('/products/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _c;
     try {

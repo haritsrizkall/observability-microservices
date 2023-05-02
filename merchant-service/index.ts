@@ -6,8 +6,6 @@ import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import bcrypt from 'bcrypt';
-import jsonwebtoken from 'jsonwebtoken';
 import AuthService from './services/auth';
 import { Merchant, User } from './utils/types';
 
