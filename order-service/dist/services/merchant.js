@@ -13,19 +13,31 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
-const API_URL = "http://localhost:3004/api/catalog/";
-const CatalogService = {
+const API_URL = "http://localhost:3003/api/merchant/";
+const MerchantService = {
+    getById: (id, token) => __awaiter(void 0, void 0, void 0, function* () {
+        const response = yield axios_1.default.get(`${API_URL}/merchants/${id}`, {
+            headers: {
+                Authorization: `${token}`,
+            },
+        });
+        return response;
+    }),
     getByIds: (ids, token) => __awaiter(void 0, void 0, void 0, function* () {
-        let productIds = ids.join(",");
-        const response = yield axios_1.default.get(`${API_URL}/products/in`, {
+        let merchantIds = ids.join(",");
+        const response = yield axios_1.default.get(`${API_URL}/merchants/in`, {
             headers: {
                 Authorization: `${token}`,
             },
             params: {
-                ids: productIds
-            }
+                ids: merchantIds,
+            },
         });
+        return response;
+    }),
+    getByIdPublic: (id) => __awaiter(void 0, void 0, void 0, function* () {
+        const response = yield axios_1.default.get(`${API_URL}/public/merchants/${id}`);
         return response;
     })
 };
-exports.default = CatalogService;
+exports.default = MerchantService;
