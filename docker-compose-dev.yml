@@ -55,3 +55,8 @@ services:
     depends_on:
       - prometheus
       - jaeger
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    ports:
+      - 9100:9100
