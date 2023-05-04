@@ -45,3 +45,13 @@ services:
    command: 
      - '--config.file=/etc/prometheus/prometheus.yml'
      - '--storage.tsdb.path=/prometheus'
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - ./grafana:/var/lib/grafana
+    ports:
+      - 3010:3000
+    depends_on:
+      - prometheus
+      - jaeger
