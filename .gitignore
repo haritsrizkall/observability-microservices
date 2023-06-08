@@ -4,3 +4,6 @@ prometheus
 grafana
 promtail
 loki
+ssh
+source
+
