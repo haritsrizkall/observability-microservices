@@ -4,12 +4,13 @@ init('order-service', 'development');
 
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import { OrderStatus, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import AuthService from './services/auth';
-import { User } from './utils/types';
+import { Merchant, User } from './utils/types';
 import CatalogService from './services/catalog';
 import MerchantService from './services/merchant';
+const { trace } = require('@opentelemetry/api');
 
 dotenv.config();
 
@@ -33,6 +34,10 @@ const createOrderInput = z.object({
 });
 apiRouter.post('/orders', async (req: Request, res: Response) => {
     try {
+        const activeSpan = trace.getActiveSpan()
+        activeSpan.addEvent('create order')
+        activeSpan.setAttribute('haha', 'hihi')
+        // currentSpan?.addEvent('create order');
         const { merchantId, orderItems } = req.body;
         const { authorization } = req.headers;
         await createOrderInput.parseAsync({
@@ -42,6 +47,7 @@ apiRouter.post('/orders', async (req: Request, res: Response) => {
         // get user 
         let resp = await AuthService.me(authorization);
         let user = resp.data.data as User
+        // currentSpan?.setAttribute("user", user.id)
         // get products
         let productIds = orderItems.map((item: any) => item.productId);
         let productsResp = await CatalogService.getByIds(productIds, authorization);
@@ -94,7 +100,8 @@ apiRouter.post('/orders', async (req: Request, res: Response) => {
                     quantity: item.quantity,
                     total: products.find((product: any) => product.id == item.productId).price * item.quantity,
                 })),
-            }
+            },
+            status: OrderStatus.CREATED,
         }
         let order = await prisma.order.create({
             data: newOrder,
@@ -128,6 +135,260 @@ apiRouter.post('/orders', async (req: Request, res: Response) => {
         });
     }
 });
+apiRouter.get('/orders/:id', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { authorization } = req.headers;
+        let resp = await AuthService.me(authorization);
+        let user = resp.data.data as User
+        // check if order exists
+        const order = await prisma.order.findUnique({
+            where: {
+                id: Number(id),
+            },
+        })
+        if (!order) {
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: "Order not found",
+            });
+        }
+        const merchantResp = await MerchantService.getById(order.merchantId, authorization);
+        const merchant = merchantResp.data.data as Merchant;
+        // check if order belongs to user
+        if (order.userId != user.id || merchant.id != order.merchantId) {
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: "Order is not yours",
+            });
+        }
+        return res.status(200).json({
+            message: "Success get order",
+            data: order,
+        });
+    }catch (err: any) {
+        // if axios error
+        if (err.response) {
+            return res.status(err.response.status).json({
+                message: err.response.data.message,
+                errors: err.response.data.errors,
+            });
+        }
+        if (err instanceof z.ZodError) {
+            console.log(err);
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: err.errors,
+            });
+        }
+        return res.status(500).json({
+            message: 'Internal Server Error',
+            errors: err,
+        });
+    }
+})
+
+apiRouter.post('/orders/:id/cancel', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { authorization } = req.headers;
+        let resp = await AuthService.me(authorization);
+        let user = resp.data.data as User
+        // check if order exists
+        const order = await prisma.order.findUnique({
+            where: {
+                id: Number(id),
+            },
+        })
+        if (!order) {
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: "Order not found",
+            });
+        }
+        // check if order belongs to user
+        if (order.userId != user.id) {
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: "Order is not yours",
+            });
+        }
+        // check if order is already cancelled
+        if (order.status != OrderStatus.CREATED) {
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: "Order is already cancelled",
+            });
+        }
+        // cancel order
+        let cancelledOrder = await prisma.order.update({
+            where: {
+                id: Number(id),
+            },
+            data: {
+                status: OrderStatus.CANCELLED,
+            },
+        });
+        return res.status(200).json({
+            message: "Success cancel order",
+            data: cancelledOrder,
+        });
+    }catch (err: any) {
+        // if axios error
+        if (err.response) {
+            return res.status(err.response.status).json({
+                message: err.response.data.message,
+                errors: err.response.data.errors,
+            });
+        }
+        if (err instanceof z.ZodError) {
+            console.log(err);
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: err.errors,
+            });
+        }
+        return res.status(500).json({
+            message: 'Internal Server Error',
+            errors: err,
+        });
+    }
+});
+
+apiRouter.post('/orders/:id/paid', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { authorization } = req.headers;
+        let resp = await AuthService.me(authorization);
+        let user = resp.data.data as User
+        // check if order exists
+        const order = await prisma.order.findUnique({
+            where: {
+                id: Number(id),
+            },
+        })
+        if (!order) {
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: "Order not found",
+            });
+        }
+        // check if order belongs to user
+        if (order.userId != user.id) {
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: "Order is not yours",
+            });
+        }
+        // check if order is can be paid
+        if (order.status != OrderStatus.CREATED) {
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: "Order cannot be paid",
+            });
+        }
+        // pay order
+        let paidOrder = await prisma.order.update({
+            where: {
+                id: Number(id),
+            },
+            data: {
+                status: OrderStatus.PAID,
+            },
+        });
+        return res.status(200).json({
+            message: "Success pay order",
+            data: paidOrder,
+        });
+    }catch (err: any) {
+        // if axios error
+        if (err.response) {
+            return res.status(err.response.status).json({
+                message: err.response.data.message,
+                errors: err.response.data.errors,
+            });
+        }
+        if (err instanceof z.ZodError) {
+            console.log(err);
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: err.errors,
+            });
+        }
+        return res.status(500).json({
+            message: 'Internal Server Error',
+            errors: err,
+        });
+    }
+});
+
+apiRouter.post('/orders/:id/complete', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { authorization } = req.headers;
+        let resp = await AuthService.me(authorization);
+        let user = resp.data.data as User
+        // check if order exists
+        const order = await prisma.order.findUnique({
+            where: {
+                id: Number(id),
+            },
+        })
+        if (!order) {
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: "Order not found",
+            });
+        }
+        // check if order belongs to user
+        if (order.userId != user.id) {
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: "Order is not yours",
+            });
+        }
+        // check if order is can be paid
+        if (order.status != OrderStatus.PAID) {
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: "Order cannot be completed",
+            });
+        }
+        // pay order
+        let paidOrder = await prisma.order.update({
+            where: {
+                id: Number(id),
+            },
+            data: {
+                status: OrderStatus.COMPLETED,
+            },
+        });
+        return res.status(200).json({
+            message: "Success pay order",
+            data: paidOrder,
+        });
+    }catch (err: any) {
+        // if axios error
+        if (err.response) {
+            return res.status(err.response.status).json({
+                message: err.response.data.message,
+                errors: err.response.data.errors,
+            });
+        }
+        if (err instanceof z.ZodError) {
+            console.log(err);
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: err.errors,
+            });
+        }
+        return res.status(500).json({
+            message: 'Internal Server Error',
+            errors: err,
+        });
+    }
+});
+
 
 app.use('/api/order', apiRouter);
 
