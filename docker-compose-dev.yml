@@ -1,5 +1,16 @@
 version: '3.8'
 services:
+  auth:
+    container_name: auth
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=mysql://root:root@db:3306/auth
+    ports:
+      - 3001:3001
+    depends_on:
+      - db
   db:
     image: mysql:8.0
     restart: always
@@ -37,6 +48,7 @@ services:
   prometheus:
    image: prom/prometheus
    container_name: prometheus
+   user: root
    volumes:
      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
      - ./prometheus/data:/prometheus
@@ -48,6 +60,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    user: "1000:1000"
     volumes:
       - ./grafana:/var/lib/grafana
     ports:
@@ -60,3 +73,21 @@ services:
     container_name: node_exporter
     ports:
       - 9100:9100
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    user: root
+    ports:
+      - 3100:3100
+    command: -config.file=/etc/loki/local-config.yml
+    volumes:
+      - ./loki:/etc/loki
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    user: root
+    ports:
+      - 9080:9080
+    volumes:
+      - ./promtail:/etc/promtail
+    command: -config.file=/etc/promtail/config.yml

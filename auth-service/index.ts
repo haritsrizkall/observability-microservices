@@ -98,6 +98,7 @@ const loginInput = z.object({
 
 apiRouter.post('/login', async (req: Request, res: Response) => {
   try {
+    console.log("login")
     loginCounter.add(1, {
       email: req.body.email,
       password: req.body.password,
