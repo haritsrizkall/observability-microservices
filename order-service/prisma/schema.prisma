@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl", "linux-musl-openssl-3.0.x"]
   previewFeatures = ["tracing"]
 }
 
@@ -17,8 +18,11 @@ model Order {
   merchantId Int
   subtotal Float
   tax      Float
+  status   OrderStatus
   total    Float
   orderItems OrderItem[]  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OrderItem {
@@ -31,3 +35,9 @@ model OrderItem {
   order   Order    @relation(fields: [orderId], references: [id])
 }
 
+enum OrderStatus {
+  CREATED
+  PAID
+  CANCELLED
+  COMPLETED
+}

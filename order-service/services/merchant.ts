@@ -3,7 +3,7 @@ import axios from "axios";
 const API_URL = "http://localhost:3003/api/merchant/";
 
 const MerchantService = {
-    getById: async (id: string, token: string | undefined) => {
+    getById: async (id: number, token: string | undefined) => {
         const response = await axios.get(`${API_URL}/merchants/${id}`, {
             headers: {
                 Authorization: `${token}`,
