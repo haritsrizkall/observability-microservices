@@ -91,3 +91,14 @@ services:
     volumes:
       - ./promtail:/etc/promtail
     command: -config.file=/etc/promtail/config.yml
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    ports:
+      - 4317:4317
+      - 4318:4318
+    depends_on:
+      - jaeger
+    volumes:
+      - ./otel-collector/config.yaml:/otel/config.yaml
+    command: ["--config=/otel/config.yaml"]

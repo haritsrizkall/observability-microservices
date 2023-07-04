@@ -12,6 +12,7 @@ import { ConsoleSpanExporter } from "@opentelemetry/sdk-trace-base/build/src/exp
 import { MySQLInstrumentation } from "@opentelemetry/instrumentation-mysql"
 import MySQL2Instrumentation from "@opentelemetry/instrumentation-mysql2"
 import { PrismaInstrumentation } from "@prisma/instrumentation"
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http"
 
 //const hostName = 'localhost'
 const hostName = process.env.OTEL_TRACE_HOST || 'localhost'
@@ -22,7 +23,10 @@ const options = {
 
 export const init = (serviceName: any, environment: any) => {
 
-  const exporter = new JaegerExporter(options)
+  // const exporter = new JaegerExporter(options)
+  const OTLPExporter = new OTLPTraceExporter({
+    url:"http://localhost:4318/v1/traces"
+  })
 
   const provider = new NodeTracerProvider({
     resource: new Resource({
@@ -32,7 +36,7 @@ export const init = (serviceName: any, environment: any) => {
   })
 
   // Use the BatchSpanProcessor to export spans in batches in order to more efficiently use resources.
-  provider.addSpanProcessor(new SimpleSpanProcessor(exporter))
+  provider.addSpanProcessor(new SimpleSpanProcessor(OTLPExporter))
 
   // Enable to see the spans printed in the console by the ConsoleSpanExporter
 //   provider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter())) 

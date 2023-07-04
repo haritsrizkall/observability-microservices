@@ -95,10 +95,6 @@ const loginInput = zod_1.z.object({
 apiRouter.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log("login");
-        loginCounter.add(1, {
-            email: req.body.email,
-            password: req.body.password,
-        });
         const { email, password } = req.body;
         yield loginInput.parseAsync({
             email,
