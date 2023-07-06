@@ -20,6 +20,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const client_1 = require("@prisma/client");
 const zod_1 = require("zod");
 const auth_1 = __importDefault(require("./services/auth"));
+const faker_1 = require("@faker-js/faker");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = (_a = process.env.PORT) !== null && _a !== void 0 ? _a : 3001;
@@ -32,6 +33,30 @@ const apiRouter = express_1.default.Router();
 const createMerchantInput = zod_1.z.object({
     name: zod_1.z.string().min(3),
 });
+apiRouter.get('/faker-data', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const resp = yield auth_1.default.get(undefined, 200);
+        for (let i = 0; i < 200; i++) {
+            yield prisma.merchant.create({
+                data: {
+                    name: faker_1.faker.company.name(),
+                    userId: resp.data.data[i].id,
+                    levelId: 1,
+                }
+            });
+        }
+    }
+    catch (error) {
+        return res.status(500).json({
+            message: 'Internal Server Error',
+            errors: error,
+            error_message: error.message,
+        });
+    }
+    return res.status(200).json({
+        data: "All data created successfully",
+    });
+}));
 apiRouter.post('/merchants', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { name } = req.body;

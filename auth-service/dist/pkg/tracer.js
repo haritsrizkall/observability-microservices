@@ -29,7 +29,6 @@ const init = (serviceName, environment) => {
     // Use the BatchSpanProcessor to export spans in batches in order to more efficiently use resources.
     provider.addSpanProcessor(new SimpleSpanProcessor_1.SimpleSpanProcessor(OTLPExporter));
     // Enable to see the spans printed in the console by the ConsoleSpanExporter
-    //   provider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter())) 
     // provider.register()
     provider.register();
     console.log('tracing initialized');

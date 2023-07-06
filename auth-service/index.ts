@@ -4,13 +4,14 @@ init('auth-service', 'development');
 
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import jsonwebtoken from 'jsonwebtoken';
 import opentelemetry from '@opentelemetry/api';
 import { MeterProvider } from '@opentelemetry/sdk-metrics';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
+import { faker } from '@faker-js/faker';
 
 const { endpoint, port } = PrometheusExporter.DEFAULT_OPTIONS;
 const exporter = new PrometheusExporter({}, () => {
@@ -38,6 +39,33 @@ const prisma = new PrismaClient();
 
 
 app.use(express.json());
+app.get('/faker-data', async (req: Request, res: Response) => {
+  try {
+    for (let i = 0; i < 990; i++) {
+      const user = await prisma.user.create({
+        data: {
+          email: faker.internet.email(),
+          password: faker.internet.password(),
+          roleId: 2,
+          profile: {
+            create: {
+              name: faker.name.fullName(),
+            },
+          },
+        },
+      });
+    }
+  } catch (error: any) {
+    return res.status(500).json({
+      message: 'Internal Server Error',
+      errors: error,
+      error_message: error.message,
+    });
+  }
+  return res.status(200).json({
+    data: "All data created successfully",
+  });
+});
 app.get('/', (req: Request, res: Response) => {
   res.send('Express + TypeScript Server');
 });
@@ -59,11 +87,10 @@ apiRouter.post('/register', async (req: Request, res: Response) => {
       password,
       name,
     });
-    const hashPassword = await bcrypt.hash(password, 10);
     let user = await prisma.user.create({
       data: {
         email,
-        password: hashPassword,
+        password: password,
         roleId: 2,
         profile: {
           create: {
@@ -98,7 +125,6 @@ const loginInput = z.object({
 
 apiRouter.post('/login', async (req: Request, res: Response) => {
   try {
-    console.log("login")
     const { email, password } = req.body
     await loginInput.parseAsync({
       email,
@@ -114,8 +140,7 @@ apiRouter.post('/login', async (req: Request, res: Response) => {
         message: 'Email or not found',
       });
     }
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) {
+    if (password !== user.password) {
       return res.status(400).json({
         message: 'Email or password is incorrect',
       });
@@ -227,6 +252,31 @@ apiRouter.get('/me', async (req: Request, res: Response) => {
   }
 });
 
+apiRouter.get('/users', async (req: Request, res: Response) => {
+  const { count } = req.query
+  try {
+    const users = await prisma.user.findMany({
+      take: count ? parseInt(count as string) : undefined,
+    });
+    return res.status(200).json({
+      message: 'Users found',
+      data: users,
+    });
+  }catch (err: any) {
+    if (err instanceof z.ZodError) {
+      console.log(err);
+      return res.status(400).json({
+        message: "Bad Request",
+        errors: err.errors,
+      });
+    }
+    return  res.status(500).json({
+      message: 'Internal Server Error',
+      errors: err,
+    });
+  }
+})
+
 apiRouter.get('/users/in', async (req: Request, res: Response) => {
   try {
     const { ids }: {
@@ -287,8 +337,7 @@ apiRouter.get('/users/:id', async (req: Request, res: Response) => {
       errors: err,
     });
   }
-})
-
+});
 
 app.use('/api/auth', apiRouter);
 

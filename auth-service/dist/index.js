@@ -19,10 +19,10 @@ const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const client_1 = require("@prisma/client");
 const zod_1 = require("zod");
-const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const sdk_metrics_1 = require("@opentelemetry/sdk-metrics");
 const exporter_prometheus_1 = require("@opentelemetry/exporter-prometheus");
+const faker_1 = require("@faker-js/faker");
 const { endpoint, port } = exporter_prometheus_1.PrometheusExporter.DEFAULT_OPTIONS;
 const exporter = new exporter_prometheus_1.PrometheusExporter({}, () => {
     console.log(`prometheus scrape endpoint: http://localhost:${port}${endpoint}`);
@@ -39,6 +39,34 @@ const app = (0, express_1.default)();
 const portExpress = (_a = process.env.PORT) !== null && _a !== void 0 ? _a : 3000;
 const prisma = new client_1.PrismaClient();
 app.use(express_1.default.json());
+app.get('/faker-data', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        for (let i = 0; i < 990; i++) {
+            const user = yield prisma.user.create({
+                data: {
+                    email: faker_1.faker.internet.email(),
+                    password: faker_1.faker.internet.password(),
+                    roleId: 2,
+                    profile: {
+                        create: {
+                            name: faker_1.faker.name.fullName(),
+                        },
+                    },
+                },
+            });
+        }
+    }
+    catch (error) {
+        return res.status(500).json({
+            message: 'Internal Server Error',
+            errors: error,
+            error_message: error.message,
+        });
+    }
+    return res.status(200).json({
+        data: "All data created successfully",
+    });
+}));
 app.get('/', (req, res) => {
     res.send('Express + TypeScript Server');
 });
@@ -56,11 +84,10 @@ apiRouter.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, func
             password,
             name,
         });
-        const hashPassword = yield bcrypt_1.default.hash(password, 10);
         let user = yield prisma.user.create({
             data: {
                 email,
-                password: hashPassword,
+                password: password,
                 roleId: 2,
                 profile: {
                     create: {
@@ -94,7 +121,6 @@ const loginInput = zod_1.z.object({
 });
 apiRouter.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log("login");
         const { email, password } = req.body;
         yield loginInput.parseAsync({
             email,
@@ -110,8 +136,7 @@ apiRouter.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, functio
                 message: 'Email or not found',
             });
         }
-        const isPasswordCorrect = yield bcrypt_1.default.compare(password, user.password);
-        if (!isPasswordCorrect) {
+        if (password !== user.password) {
             return res.status(400).json({
                 message: 'Email or password is incorrect',
             });
@@ -203,6 +228,31 @@ apiRouter.get('/me', (req, res) => __awaiter(void 0, void 0, void 0, function* (
         return res.status(200).json({
             message: 'Authorized',
             data: user,
+        });
+    }
+    catch (err) {
+        if (err instanceof zod_1.z.ZodError) {
+            console.log(err);
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: err.errors,
+            });
+        }
+        return res.status(500).json({
+            message: 'Internal Server Error',
+            errors: err,
+        });
+    }
+}));
+apiRouter.get('/users', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { count } = req.query;
+    try {
+        const users = yield prisma.user.findMany({
+            take: count ? parseInt(count) : undefined,
+        });
+        return res.status(200).json({
+            message: 'Users found',
+            data: users,
         });
     }
     catch (err) {

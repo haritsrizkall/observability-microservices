@@ -3,6 +3,10 @@ import axios from "axios";
 const API_URL = "http://localhost:3003/api/merchant/";
 
 const MerchantService = {
+    getAll: async (token: string | undefined, count: number) => {
+        const response = await axios.get(API_URL + "merchants", {});
+        return response;
+    },
     getById: async (id: string, token: string | undefined) => {
         const response = await axios.get(`${API_URL}/merchants/${id}`, {
             headers: {

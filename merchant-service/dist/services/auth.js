@@ -15,6 +15,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const API_URL = "http://localhost:3001/api/auth/";
 const AuthService = {
+    get: (token, count) => __awaiter(void 0, void 0, void 0, function* () {
+        const response = yield axios_1.default.get(API_URL + "users", {
+            params: {
+                count: count,
+            },
+            headers: {
+                Authorization: `${token}`,
+            },
+        });
+        return response;
+    }),
     login: (email, password) => __awaiter(void 0, void 0, void 0, function* () {
         const response = yield axios_1.default.post(API_URL + "login", {
             email,

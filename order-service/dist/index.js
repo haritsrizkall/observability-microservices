@@ -22,6 +22,7 @@ const zod_1 = require("zod");
 const auth_1 = __importDefault(require("./services/auth"));
 const catalog_1 = __importDefault(require("./services/catalog"));
 const merchant_1 = __importDefault(require("./services/merchant"));
+const payment_1 = __importDefault(require("./services/payment"));
 const { trace } = require('@opentelemetry/api');
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -41,9 +42,9 @@ const createOrderInput = zod_1.z.object({
 });
 apiRouter.post('/orders', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const activeSpan = trace.getActiveSpan();
-        activeSpan.addEvent('create order');
-        activeSpan.setAttribute('haha', 'hihi');
+        // const activeSpan = trace.getActiveSpan()
+        // activeSpan.addEvent('create order')
+        // activeSpan.setAttribute('haha', 'hihi')
         // currentSpan?.addEvent('create order');
         const { merchantId, orderItems } = req.body;
         const { authorization } = req.headers;
@@ -115,6 +116,21 @@ apiRouter.post('/orders', (req, res) => __awaiter(void 0, void 0, void 0, functi
                 orderItems: true,
             }
         });
+        console.log("kakkakaka");
+        // create payment
+        const newPayment = {
+            order_id: order.id,
+            amount: total,
+        };
+        console.log("newPayment ", newPayment);
+        let respPayment = yield payment_1.default.create(newPayment, authorization);
+        console.log(respPayment);
+        if (respPayment.status != 200) {
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: "Payment failed",
+            });
+        }
         return res.status(200).json({
             message: "Success create order",
             data: order,

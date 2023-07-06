@@ -22,6 +22,7 @@ const zod_1 = require("zod");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const merchant_1 = __importDefault(require("./services/merchant"));
 const axios_1 = require("axios");
+const faker_1 = require("@faker-js/faker");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = (_a = process.env.PORT) !== null && _a !== void 0 ? _a : 3000;
@@ -30,6 +31,27 @@ app.use(express_1.default.json());
 app.get('/', (req, res) => {
     res.send('Express + TypeScript Server');
 });
+app.get('/faker-data', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const merchantResp = yield merchant_1.default.getAll(undefined, 200);
+    const merchants = merchantResp.data.data;
+    for (let i = 0; i < merchants.length; i++) {
+        for (let j = 0; j < 5; j++) {
+            const randomOneToThree = Math.floor(Math.random() * 3) + 1;
+            yield prisma.product.create({
+                data: {
+                    name: faker_1.faker.commerce.productName(),
+                    description: faker_1.faker.commerce.productDescription(),
+                    price: parseFloat(faker_1.faker.commerce.price()),
+                    merchantId: merchants[i].id,
+                    categoryId: randomOneToThree,
+                }
+            });
+        }
+    }
+    return res.status(200).json({
+        data: "All data created successfully",
+    });
+}));
 const apiRouter = express_1.default.Router();
 const authMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { authorization } = req.headers;

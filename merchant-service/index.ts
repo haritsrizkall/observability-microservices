@@ -8,6 +8,7 @@ import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import AuthService from './services/auth';
 import { Merchant, User } from './utils/types';
+import { faker } from '@faker-js/faker';
 
 dotenv.config();
 
@@ -26,6 +27,29 @@ const createMerchantInput = z.object({
   name: z.string().min(3),
 });
 
+apiRouter.get('/faker-data', async (req: Request, res: Response) => {
+  try {
+    const resp: any = await AuthService.get(undefined, 200);
+    for(let i = 0; i < 200; i++) {
+      await prisma.merchant.create({
+        data: {
+          name: faker.company.name(),
+          userId: resp.data.data[i].id,
+          levelId: 1,
+        }
+      })
+    }
+  }catch (error: any) {
+    return res.status(500).json({
+      message: 'Internal Server Error',
+      errors: error,
+      error_message: error.message,
+    });
+  }
+  return res.status(200).json({
+    data: "All data created successfully",
+  });
+});
 
 apiRouter.post('/merchants', async (req: Request, res: Response) => {
   try {

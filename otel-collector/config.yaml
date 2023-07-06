@@ -5,13 +5,21 @@ receivers:
       http:
 
 exporters:
+  logging:
+    loglevel: debug
   jaeger:
-    endpoint: "http://localhost:14268"
-    insecure: true
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
 
 processors:
   batch:
     timeout: 10s
+  attributes/example:
+    actions:
+      - key: rizkal
+        value: ganteng
+        action: upsert
 
 extensions:
   health_check:
@@ -20,5 +28,5 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [jaeger]
+      processors: [batch, attributes/example]
+      exporters: [logging, jaeger]

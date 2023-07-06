@@ -3,6 +3,17 @@ import axios from "axios";
 const API_URL = "http://localhost:3001/api/auth/";
 
 const AuthService = {
+    get: async (token: string | undefined, count: number) => {
+        const response = await axios.get(API_URL + "users", {
+            params: {
+                count: count,
+            },
+            headers: {
+                Authorization: `${token}`,
+            },
+        });
+        return response;
+    },
     login: async (email: string, password: string) => {
         const response = await axios.post(API_URL + "login", {
             email,

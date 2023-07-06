@@ -22,6 +22,10 @@ type CreatePaymentRequest struct {
 	Amount  float64 `json:"amount" validate:"required"`
 }
 
+func (h *PaymentHandler) HalloPayment(c echo.Context) error {
+	return c.JSON(http.StatusOK, "Hallo Payment")
+}
+
 func (h *PaymentHandler) CreatePayment(c echo.Context) error {
 	var request CreatePaymentRequest
 	err := c.Bind(&request)

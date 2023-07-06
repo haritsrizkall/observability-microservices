@@ -15,6 +15,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const API_URL = "http://localhost:3003/api/merchant/";
 const MerchantService = {
+    getAll: (token, count) => __awaiter(void 0, void 0, void 0, function* () {
+        const response = yield axios_1.default.get(API_URL + "merchants", {});
+        return response;
+    }),
     getById: (id, token) => __awaiter(void 0, void 0, void 0, function* () {
         const response = yield axios_1.default.get(`${API_URL}/merchants/${id}`, {
             headers: {

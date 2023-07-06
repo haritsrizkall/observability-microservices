@@ -4,12 +4,13 @@ init('order-service', 'development');
 
 import express, { Express, Request, Response } from 'express';
 import dotenv from 'dotenv';
-import { OrderStatus, PrismaClient } from '@prisma/client';
+import { Order, OrderStatus, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import AuthService from './services/auth';
 import { Merchant, User } from './utils/types';
 import CatalogService from './services/catalog';
 import MerchantService from './services/merchant';
+import PaymentService from './services/payment';
 const { trace } = require('@opentelemetry/api');
 
 dotenv.config();
@@ -34,9 +35,9 @@ const createOrderInput = z.object({
 });
 apiRouter.post('/orders', async (req: Request, res: Response) => {
     try {
-        const activeSpan = trace.getActiveSpan()
-        activeSpan.addEvent('create order')
-        activeSpan.setAttribute('haha', 'hihi')
+        // const activeSpan = trace.getActiveSpan()
+        // activeSpan.addEvent('create order')
+        // activeSpan.setAttribute('haha', 'hihi')
         // currentSpan?.addEvent('create order');
         const { merchantId, orderItems } = req.body;
         const { authorization } = req.headers;
@@ -85,7 +86,6 @@ apiRouter.post('/orders', async (req: Request, res: Response) => {
         let taxPercent = 11;
         let tax = subtotal * taxPercent / 100;
         let total = subtotal + tax;
-        
         // create order
         const newOrder = {
             userId: user.id,
@@ -109,6 +109,21 @@ apiRouter.post('/orders', async (req: Request, res: Response) => {
                 orderItems: true,
             }
         });
+        console.log("kakkakaka")
+        // create payment
+        const newPayment = {
+            order_id: order.id,
+            amount: total,
+        }
+        console.log("newPayment ", newPayment)
+        let respPayment = await PaymentService.create(newPayment, authorization);
+        console.log(respPayment)
+        if (respPayment.status != 200) {
+            return res.status(400).json({
+                message: "Bad Request",
+                errors: "Payment failed",
+            });
+        } 
 
         return res.status(200).json({
             message: "Success create order",

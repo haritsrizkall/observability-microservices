@@ -11,6 +11,7 @@ import jsonwebtoken from 'jsonwebtoken';
 import MerchantService from './services/merchant';
 import { AxiosError } from 'axios';
 import { Merchant } from './utils/types';
+import { faker } from '@faker-js/faker';
 
 dotenv.config();
 
@@ -22,6 +23,27 @@ const prisma = new PrismaClient();
 app.use(express.json());
 app.get('/', (req: Request, res: Response) => {
   res.send('Express + TypeScript Server');
+});
+app.get('/faker-data', async (req: Request, res: Response) => {
+  const merchantResp = await MerchantService.getAll(undefined, 200);
+  const merchants = merchantResp.data.data;
+  for(let i = 0; i < merchants.length; i++) {
+    for (let j = 0; j < 5; j++) {
+      const randomOneToThree = Math.floor(Math.random() * 3) + 1;
+      await prisma.product.create({
+        data: {
+          name: faker.commerce.productName(),
+          description: faker.commerce.productDescription(),
+          price: parseFloat(faker.commerce.price()),
+          merchantId: merchants[i].id,
+          categoryId: randomOneToThree,
+        }
+      })
+    }
+  }
+  return res.status(200).json({
+    data: "All data created successfully",
+  });
 });
 
 const apiRouter = express.Router();

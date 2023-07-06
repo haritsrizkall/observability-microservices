@@ -14,7 +14,8 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -34,12 +35,19 @@ var serviceName string = "payment-service"
 var tracer = otel.Tracer(serviceName)
 
 func initTracer() (*sdktrace.TracerProvider, error) {
-	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint("http://localhost:14268/api/traces")))
+	// exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint("http://localhost:14268/api/traces")))
+	// if err != nil {
+	// 	return nil, err
+	// }
+	option := otlptracehttp.WithInsecure()
+	client := otlptracehttp.NewClient(option)
+	otlpExporter, err := otlptrace.New(context.Background(), client)
+	// otlpExporter, err := otlptrace.NewUnstarted()
 	if err != nil {
 		return nil, err
 	}
 	tp := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(exporter),
+		sdktrace.WithBatcher(otlpExporter),
 		sdktrace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceName(serviceName),
@@ -78,6 +86,7 @@ func main() {
 	e := echo.New()
 	e.Use(otelecho.Middleware(serviceName))
 	paymentGroup := e.Group("api/payments")
+	paymentGroup.GET("", paymentHandler.HalloPayment)
 	paymentGroup.POST("", paymentHandler.CreatePayment)
 	paymentGroup.GET("/:payment_id", paymentHandler.GetPayment)
 	paymentGroup.PUT("/:payment_id/pay", paymentHandler.PayPayment)
