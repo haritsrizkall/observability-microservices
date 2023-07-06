@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: order-deployment
+  labels: 
+    app: order
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order
+  template:
+    metadata:
+      labels:
+        app: order
+    spec:
+      containers:
+        - name: order
+          image: haritsrizkal/obs-micro-order:1.0.0
+          ports: 
+            - containerPort: 3002
+          env:
+            - name: PORT
+              value: "3002"
+            - name: DATABASE_URL
+              value: "mysql://root:root@mysql.default.svc.cluster.local:3306/order"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  labels:
+    app: order
+spec:
+  type: NodePort
+  selector:
+    app: order
+  ports:
+    - port: 3002
+      targetPort: 3002
+      nodePort: 32764

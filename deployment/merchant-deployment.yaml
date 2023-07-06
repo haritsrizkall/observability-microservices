@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: merchant-deployment
+  labels: 
+    app: merchant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: merchant
+  template:
+    metadata:
+      labels:
+        app: merchant
+    spec:
+      containers:
+        - name: merchant
+          image: haritsrizkal/obs-micro-merchant:1.0.0
+          ports: 
+            - containerPort: 3003
+          env:
+            - name: PORT
+              value: "3003"
+            - name: DATABASE_URL
+              value: "mysql://root:root@mysql.default.svc.cluster.local:3306/merchant"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: merchant-service
+  labels:
+    app: merchant
+spec:
+  type: NodePort
+  selector:
+    app: merchant
+  ports:
+    - port: 3003
+      targetPort: 3003
+      nodePort: 32765
+
