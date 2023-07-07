@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: catalog
-          image: haritsrizkal/obs-micro-catalog:1.0.0
+          image: haritsrizkal/obs-micro-catalog:1.0.1
           ports: 
             - containerPort: 3004
           env:
