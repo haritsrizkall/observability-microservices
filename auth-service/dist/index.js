@@ -62,6 +62,29 @@ app.get("/", (req, res) => {
     res.send("Express + TypeScript Server, " + db_url + " - " + port);
 });
 const apiRouter = express_1.default.Router();
+const bottleNeckMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const isBottleNeck = process.env.IS_BOTTLENECK_ENABLED == "true";
+    if (!isBottleNeck) {
+        return next();
+    }
+    else {
+        yield new Promise((resolve) => setTimeout(resolve, 5000));
+        return next();
+    }
+});
+const errorMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const isError = process.env.IS_ERROR_ENABLED == "true";
+    if (!isError) {
+        return next();
+    }
+    else {
+        return res.status(500).json({
+            message: "Internal Server Error - This is generated error for testing",
+        });
+    }
+});
+apiRouter.use(errorMiddleware);
+apiRouter.use(bottleNeckMiddleware);
 const registerInput = zod_1.z.object({
     name: zod_1.z.string().min(3),
     email: zod_1.z.string().email(),

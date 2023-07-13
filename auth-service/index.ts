@@ -55,6 +55,30 @@ app.get("/", (req: Request, res: Response) => {
 
 const apiRouter = express.Router();
 
+const bottleNeckMiddleware = async (req: Request, res: Response, next: any) => {
+  const isBottleNeck = process.env.IS_BOTTLENECK_ENABLED == "true";
+  if (!isBottleNeck) {
+    return next();
+  } else {
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    return next();
+  }
+};
+
+const errorMiddleware = async (req: Request, res: Response, next: any) => {
+  const isError = process.env.IS_ERROR_ENABLED == "true";
+  if (!isError) {
+    return next();
+  } else {
+    return res.status(500).json({
+      message: "Internal Server Error - This is generated error for testing",
+    });
+  }
+};
+
+apiRouter.use(errorMiddleware);
+apiRouter.use(bottleNeckMiddleware);
+
 const registerInput = z.object({
   name: z.string().min(3),
   email: z.string().email(),
