@@ -8,7 +8,7 @@ exporters:
   logging:
     loglevel: debug
   jaeger:
-    endpoint: jaeger:14250
+    endpoint: jaeger-skripsi:14250
     tls:
       insecure: true
 
