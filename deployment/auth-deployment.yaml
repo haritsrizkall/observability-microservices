@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
-metadata: 
+metadata:
   name: auth-deployment
-  labels: 
+  labels:
     app: auth
 spec:
   replicas: 1
@@ -17,15 +17,15 @@ spec:
       containers:
         - name: auth
           image: haritsrizkal/obs-micro-auth:1.0.2
-          ports: 
+          ports:
             - containerPort: 3001
-          env: 
+          env:
             - name: PORT
               value: "3001"
             - name: DATABASE_URL
               value: "mysql://root:root@mysql.default.svc.cluster.local:3306/auth"
             - name: OTEL_COLLECTOR_ENDPOINT
-              value: "http://simplest-collector.default.svc.cluster.local:4318/v1/traces"
+              value: "http://otelcol-collector.default.svc.cluster.local:4318/v1/traces"
 ---
 apiVersion: v1
 kind: Service

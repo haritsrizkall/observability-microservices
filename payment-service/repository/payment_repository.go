@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"skripsi-rizkal/payment-service/entity"
 
 	"gorm.io/gorm"
@@ -8,7 +9,7 @@ import (
 
 type PaymentRepository interface {
 	Create(payment *entity.Payment) (*entity.Payment, error)
-	Get(paymentID string) (*entity.Payment, error)
+	Get(ctx context.Context, paymentID string) (*entity.Payment, error)
 	Update(payment *entity.Payment) (*entity.Payment, error)
 }
 
@@ -28,9 +29,9 @@ func (r *paymentRepository) Create(payment *entity.Payment) (*entity.Payment, er
 	return payment, nil
 }
 
-func (r *paymentRepository) Get(paymentID string) (*entity.Payment, error) {
+func (r *paymentRepository) Get(ctx context.Context, paymentID string) (*entity.Payment, error) {
 	var payment entity.Payment
-	err := r.db.Where("payment_id = ?", paymentID).First(&payment).Error
+	err := r.db.WithContext(ctx).Where("payment_id = ?", paymentID).First(&payment).Error
 	if err != nil {
 		return nil, err
 	}

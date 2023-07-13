@@ -1,24 +1,26 @@
-import { init } from './pkg/tracer';
-
-init('merchant-service', 'development');
-
-import express, { Express, Request, Response } from 'express';
-import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
-import { z } from 'zod';
-import AuthService from './services/auth';
-import { Merchant, User } from './utils/types';
-import { faker } from '@faker-js/faker';
+import { init } from "./pkg/tracer";
+import dotenv from "dotenv";
 
 dotenv.config();
+
+if (process.env.IS_TRACING_ENABLED == "true") {
+  init("merchant-service", "development");
+}
+
+import express, { Express, Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
+import { z } from "zod";
+import AuthService from "./services/auth";
+import { Merchant, User } from "./utils/types";
+import { faker } from "@faker-js/faker";
 
 const app: Express = express();
 const port = process.env.PORT ?? 3001;
 const prisma = new PrismaClient();
 
 app.use(express.json());
-app.get('/', (req: Request, res: Response) => {
-  res.send('Express + TypeScript Server');
+app.get("/", (req: Request, res: Response) => {
+  res.send("Express + TypeScript Server");
 });
 
 const apiRouter = express.Router();
@@ -27,21 +29,21 @@ const createMerchantInput = z.object({
   name: z.string().min(3),
 });
 
-apiRouter.get('/faker-data', async (req: Request, res: Response) => {
+apiRouter.get("/faker-data", async (req: Request, res: Response) => {
   try {
     const resp: any = await AuthService.get(undefined, 200);
-    for(let i = 0; i < 200; i++) {
+    for (let i = 0; i < 200; i++) {
       await prisma.merchant.create({
         data: {
           name: faker.company.name(),
           userId: resp.data.data[i].id,
           levelId: 1,
-        }
-      })
+        },
+      });
     }
-  }catch (error: any) {
+  } catch (error: any) {
     return res.status(500).json({
-      message: 'Internal Server Error',
+      message: "Internal Server Error",
       errors: error,
       error_message: error.message,
     });
@@ -51,7 +53,7 @@ apiRouter.get('/faker-data', async (req: Request, res: Response) => {
   });
 });
 
-apiRouter.post('/merchants', async (req: Request, res: Response) => {
+apiRouter.post("/merchants", async (req: Request, res: Response) => {
   try {
     const { name } = req.body;
     const { authorization } = req.headers;
@@ -59,7 +61,7 @@ apiRouter.post('/merchants', async (req: Request, res: Response) => {
       name,
     });
     let resp = await AuthService.me(authorization);
-    let user = resp.data.data as User
+    let user = resp.data.data as User;
     let merchant = await prisma.merchant.create({
       data: {
         name,
@@ -68,25 +70,25 @@ apiRouter.post('/merchants', async (req: Request, res: Response) => {
       },
     });
     return res.status(200).json({
-      message: 'Merchant created successfully',
+      message: "Merchant created successfully",
       data: merchant,
     });
-  }catch (err: any) {
+  } catch (err: any) {
     if (err instanceof z.ZodError) {
       console.log(err);
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: "Bad Request",
         errors: err.errors,
-       });
+      });
     }
-    return  res.status(500).json({
-      message: 'Internal Server Error',
+    return res.status(500).json({
+      message: "Internal Server Error",
       errors: err,
     });
   }
 });
 
-apiRouter.get('/merchants', async (req: Request, res: Response) => {
+apiRouter.get("/merchants", async (req: Request, res: Response) => {
   try {
     const { authorization } = req.headers;
     const merchantPrism = await prisma.merchant.findMany({
@@ -113,61 +115,63 @@ apiRouter.get('/merchants', async (req: Request, res: Response) => {
           createdAt: merchant.level.createdAt,
           updatedAt: merchant.level.updatedAt,
         },
-      }
+      };
     });
     return res.status(200).json({
-      message: 'list of merchants',
+      message: "list of merchants",
       data: merchants,
     });
-  }catch (err: any) {
+  } catch (err: any) {
     if (err instanceof z.ZodError) {
       console.log(err);
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: "Bad Request",
         errors: err.errors,
-       });
+      });
     }
-    return  res.status(500).json({
-      message: 'Internal Server Error',
+    return res.status(500).json({
+      message: "Internal Server Error",
       errors: err,
     });
   }
 });
 
-apiRouter.get('/merchants/in', async (req: Request, res: Response) => {
+apiRouter.get("/merchants/in", async (req: Request, res: Response) => {
   try {
-    let { ids }: {
-      ids?: string
+    let {
+      ids,
+    }: {
+      ids?: string;
     } = req.query;
     // convert to number of array
-    const idsArr = ids?.split(',').map((id) => Number(id));
+    const idsArr = ids?.split(",").map((id) => Number(id));
     const merchants = await prisma.merchant.findMany({
       where: {
         id: {
-          in: idsArr
+          in: idsArr,
         },
       },
     });
     return res.status(200).json({
-      message: 'list of merchants',
+      message: "list of merchants",
       data: merchants,
     });
-  }catch (err: any) {
+  } catch (err: any) {
     if (err instanceof z.ZodError) {
       console.log(err);
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: "Bad Request",
         errors: err.errors,
-       });
+      });
     }
-    return  res.status(500).json({
-      message: 'Internal Server Error',
+    return res.status(500).json({
+      message: "Internal Server Error",
       errors: err,
     });
   }
 });
 
-apiRouter.get('/merchants/:id', async (req: Request, res: Response) => {
+apiRouter.get("/merchants/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { authorization } = req.headers;
@@ -181,10 +185,13 @@ apiRouter.get('/merchants/:id', async (req: Request, res: Response) => {
     });
     if (!merchantPrism) {
       return res.status(404).json({
-        message: 'Merchant not found',
+        message: "Merchant not found",
       });
     }
-    const respUser = await AuthService.getById(merchantPrism.userId, authorization);
+    const respUser = await AuthService.getById(
+      merchantPrism.userId,
+      authorization
+    );
     const user = respUser.data.data as User;
     const merchant: Merchant = {
       id: merchantPrism.id,
@@ -200,13 +207,13 @@ apiRouter.get('/merchants/:id', async (req: Request, res: Response) => {
         createdAt: merchantPrism.level.createdAt,
         updatedAt: merchantPrism.level.updatedAt,
       },
-    } 
+    };
     // convert merchant to Merchant type
     return res.status(200).json({
-      message: 'list of merchants',
+      message: "list of merchants",
       data: merchant,
     });
-  }catch (err: any) {
+  } catch (err: any) {
     if (err instanceof z.ZodError) {
       console.log(err);
       return res.status(400).json({
@@ -214,14 +221,14 @@ apiRouter.get('/merchants/:id', async (req: Request, res: Response) => {
         errors: err.errors,
       });
     }
-    return  res.status(500).json({
-      message: 'Internal Server Error',
+    return res.status(500).json({
+      message: "Internal Server Error",
       errors: err,
     });
   }
 });
 
-apiRouter.get('/public/merchants/:id', async (req: Request, res: Response) => {
+apiRouter.get("/public/merchants/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     let merchantPrism = await prisma.merchant.findUnique({
@@ -236,20 +243,20 @@ apiRouter.get('/public/merchants/:id', async (req: Request, res: Response) => {
           select: {
             id: true,
             name: true,
-          }
-        }
+          },
+        },
       },
     });
     if (!merchantPrism) {
       return res.status(404).json({
-        message: 'Merchant not found',
+        message: "Merchant not found",
       });
     }
     return res.status(200).json({
-      message: 'Merchant fetched successfully',
+      message: "Merchant fetched successfully",
       data: merchantPrism,
     });
-  }catch (err: any) {
+  } catch (err: any) {
     if (err instanceof z.ZodError) {
       console.log(err);
       return res.status(400).json({
@@ -257,15 +264,14 @@ apiRouter.get('/public/merchants/:id', async (req: Request, res: Response) => {
         errors: err.errors,
       });
     }
-    return  res.status(500).json({
-      message: 'Internal Server Error',
+    return res.status(500).json({
+      message: "Internal Server Error",
       errors: err,
     });
   }
 });
 
-app.use('/api/merchant', apiRouter);
-
+app.use("/api/merchant", apiRouter);
 
 app.listen(port, () => {
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);

@@ -14,32 +14,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const tracer_1 = require("./pkg/tracer");
-(0, tracer_1.init)('auth-service', 'development');
-const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+if (process.env.IS_TRACING_ENABLED == "true") {
+    (0, tracer_1.init)("auth-service", "development");
+}
+const express_1 = __importDefault(require("express"));
 const client_1 = require("@prisma/client");
 const zod_1 = require("zod");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const sdk_metrics_1 = require("@opentelemetry/sdk-metrics");
-const exporter_prometheus_1 = require("@opentelemetry/exporter-prometheus");
 const faker_1 = require("@faker-js/faker");
-const { endpoint, port } = exporter_prometheus_1.PrometheusExporter.DEFAULT_OPTIONS;
-const exporter = new exporter_prometheus_1.PrometheusExporter({}, () => {
-    console.log(`prometheus scrape endpoint: http://localhost:${port}${endpoint}`);
-});
-// Creates MeterProvider and installs the exporter as a MetricReader
-const meterProvider = new sdk_metrics_1.MeterProvider();
-meterProvider.addMetricReader(exporter);
-const meter = meterProvider.getMeter('example-prometheus');
-const loginCounter = meter.createCounter('login', {
-    description: 'Login Counter',
-});
-dotenv_1.default.config();
 const app = (0, express_1.default)();
 const portExpress = (_a = process.env.PORT) !== null && _a !== void 0 ? _a : 3000;
 const prisma = new client_1.PrismaClient();
 app.use(express_1.default.json());
-app.get('/faker-data', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get("/faker-data", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         for (let i = 0; i < 990; i++) {
             const user = yield prisma.user.create({
@@ -58,7 +47,7 @@ app.get('/faker-data', (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
     catch (error) {
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: error,
             error_message: error.message,
         });
@@ -67,8 +56,10 @@ app.get('/faker-data', (req, res) => __awaiter(void 0, void 0, void 0, function*
         data: "All data created successfully",
     });
 }));
-app.get('/', (req, res) => {
-    res.send('Express + TypeScript Server');
+app.get("/", (req, res) => {
+    const db_url = process.env.DATABASE_URL;
+    const port = process.env.PORT;
+    res.send("Express + TypeScript Server, " + db_url + " - " + port);
 });
 const apiRouter = express_1.default.Router();
 const registerInput = zod_1.z.object({
@@ -76,7 +67,7 @@ const registerInput = zod_1.z.object({
     email: zod_1.z.string().email(),
     password: zod_1.z.string().min(6),
 });
-apiRouter.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password, name } = req.body;
         yield registerInput.parseAsync({
@@ -93,11 +84,11 @@ apiRouter.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, func
                     create: {
                         name,
                     },
-                }
+                },
             },
         });
         return res.status(200).json({
-            message: 'User created successfully',
+            message: "User created successfully",
             data: user,
         });
     }
@@ -110,7 +101,7 @@ apiRouter.post('/register', (req, res) => __awaiter(void 0, void 0, void 0, func
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
@@ -119,7 +110,7 @@ const loginInput = zod_1.z.object({
     email: zod_1.z.string().email(),
     password: zod_1.z.string().min(6),
 });
-apiRouter.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
         yield loginInput.parseAsync({
@@ -133,19 +124,19 @@ apiRouter.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, functio
         });
         if (!user) {
             return res.status(400).json({
-                message: 'Email or not found',
+                message: "Email or not found",
             });
         }
         if (password !== user.password) {
             return res.status(400).json({
-                message: 'Email or password is incorrect',
+                message: "Email or password is incorrect",
             });
         }
         const token = jsonwebtoken_1.default.sign({
             userId: user.id,
         }, "skripsi-auth");
         return res.status(200).json({
-            message: 'Login successfully',
+            message: "Login successfully",
             data: {
                 token,
                 user,
@@ -161,20 +152,20 @@ apiRouter.post('/login', (req, res) => __awaiter(void 0, void 0, void 0, functio
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.post('/self-authorization', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.post("/self-authorization", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { authorization } = req.headers;
         if (!authorization) {
             return res.status(401).json({
-                message: 'Unauthorized',
+                message: "Unauthorized",
             });
         }
-        const token = authorization.split(' ')[1];
+        const token = authorization.split(" ")[1];
         const decoded = jsonwebtoken_1.default.verify(token, "skripsi-auth");
         const user = yield prisma.user.findUnique({
             where: {
@@ -183,11 +174,11 @@ apiRouter.post('/self-authorization', (req, res) => __awaiter(void 0, void 0, vo
         });
         if (!user) {
             return res.status(401).json({
-                message: 'Unauthorized',
+                message: "Unauthorized",
             });
         }
         return res.status(200).json({
-            message: 'Authorized',
+            message: "Authorized",
             data: user,
         });
     }
@@ -200,20 +191,20 @@ apiRouter.post('/self-authorization', (req, res) => __awaiter(void 0, void 0, vo
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.get('/me', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.get("/me", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { authorization } = req.headers;
         if (!authorization) {
             return res.status(401).json({
-                message: 'Unauthorized',
+                message: "Unauthorized",
             });
         }
-        const token = authorization.split(' ')[1];
+        const token = authorization.split(" ")[1];
         const decoded = jsonwebtoken_1.default.verify(token, "skripsi-auth");
         const user = yield prisma.user.findUnique({
             where: {
@@ -222,11 +213,11 @@ apiRouter.get('/me', (req, res) => __awaiter(void 0, void 0, void 0, function* (
         });
         if (!user) {
             return res.status(401).json({
-                message: 'Unauthorized',
+                message: "Unauthorized",
             });
         }
         return res.status(200).json({
-            message: 'Authorized',
+            message: "Authorized",
             data: user,
         });
     }
@@ -239,19 +230,19 @@ apiRouter.get('/me', (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.get('/users', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.get("/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { count } = req.query;
     try {
         const users = yield prisma.user.findMany({
             take: count ? parseInt(count) : undefined,
         });
         return res.status(200).json({
-            message: 'Users found',
+            message: "Users found",
             data: users,
         });
     }
@@ -264,23 +255,23 @@ apiRouter.get('/users', (req, res) => __awaiter(void 0, void 0, void 0, function
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.get('/users/in', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.get("/users/in", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { ids } = req.query;
+        const { ids, } = req.query;
         const users = yield prisma.user.findMany({
             where: {
                 id: {
-                    in: ids ? ids.split(',') : [],
+                    in: ids ? ids.split(",") : [],
                 },
             },
         });
         return res.status(200).json({
-            message: 'Users foundss',
+            message: "Users foundss",
             data: users,
         });
     }
@@ -293,12 +284,12 @@ apiRouter.get('/users/in', (req, res) => __awaiter(void 0, void 0, void 0, funct
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.get('/users/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.get("/users/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const user = yield prisma.user.findUnique({
             where: {
@@ -307,11 +298,11 @@ apiRouter.get('/users/:id', (req, res) => __awaiter(void 0, void 0, void 0, func
         });
         if (!user) {
             return res.status(404).json({
-                message: 'User not found',
+                message: "User not found",
             });
         }
         return res.status(200).json({
-            message: 'User found',
+            message: "User found",
             data: user,
         });
     }
@@ -324,12 +315,12 @@ apiRouter.get('/users/:id', (req, res) => __awaiter(void 0, void 0, void 0, func
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-app.use('/api/auth', apiRouter);
+app.use("/api/auth", apiRouter);
 app.listen(portExpress, () => {
     console.log(`⚡️[server]: Server is running at http://localhost:${portExpress}`);
 });

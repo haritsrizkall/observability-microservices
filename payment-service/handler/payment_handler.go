@@ -65,7 +65,8 @@ func (h *PaymentHandler) GetPayment(c echo.Context) error {
 		response := helper.BuildResponse(http.StatusBadRequest, err.Error(), nil)
 		return c.JSON(http.StatusBadRequest, response)
 	}
-	payment, err := h.paymentService.GetPayment(request.PaymentID)
+	ctx := c.Request().Context()
+	payment, err := h.paymentService.GetPayment(ctx,request.PaymentID)
 	if err != nil {
 		response := helper.BuildResponse(http.StatusBadRequest, err.Error(), nil)
 		return c.JSON(http.StatusInternalServerError, response)

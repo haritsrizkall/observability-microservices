@@ -6,4 +6,5 @@ promtail
 loki
 ssh
 source
+mysql-data
 

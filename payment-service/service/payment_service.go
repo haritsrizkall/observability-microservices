@@ -5,11 +5,15 @@ import (
 	"skripsi-rizkal/payment-service/entity"
 	"skripsi-rizkal/payment-service/external-service/order"
 	"skripsi-rizkal/payment-service/repository"
+
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("payment-service")
 
 type PaymentService interface {
 	CreatePayment(orderID int, amount float64) (*entity.Payment, error)
-	GetPayment(paymentID string) (*entity.Payment, error)
+	GetPayment(ctx context.Context, paymentID string) (*entity.Payment, error)
 	PayPayment(ctx context.Context, paymentID string) (*entity.Payment, error)
 }
 
@@ -35,8 +39,10 @@ func (s *paymentService) CreatePayment(orderID int, amount float64) (*entity.Pay
 	return payment, nil
 }
 
-func (s *paymentService) GetPayment(paymentID string) (*entity.Payment, error) {
-	payment, err := s.paymentRepository.Get(paymentID)
+func (s *paymentService) GetPayment(ctx context.Context, paymentID string) (*entity.Payment, error) {
+	// ctx, span := tracer.Start(ctx, "Service.Payment.GetPayment")
+	// defer span.End()
+	payment, err := s.paymentRepository.Get(ctx,paymentID)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +50,7 @@ func (s *paymentService) GetPayment(paymentID string) (*entity.Payment, error) {
 }
 
 func (s *paymentService) PayPayment(ctx context.Context, paymentID string) (*entity.Payment, error) {
-	payment, err := s.paymentRepository.Get(paymentID)
+	payment, err := s.paymentRepository.Get(ctx	,paymentID)
 	if err != nil {
 		return nil, err
 	}

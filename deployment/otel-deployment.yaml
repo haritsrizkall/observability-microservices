@@ -12,12 +12,12 @@ metadata:
   labels:
     app: otel-collector
 rules:
-  - apiGroups: ['']
-    resources: ['pods', 'namespaces']
-    verbs: ['get', 'watch', 'list']
-  - apiGroups: ['apps']
-    resources: ['deployments', 'replicasets']
-    verbs: ['get', 'watch', 'list']
+  - apiGroups: [""]
+    resources: ["pods", "namespaces"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "watch", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -37,10 +37,10 @@ subjects:
 apiVersion: opentelemetry.io/v1alpha1
 kind: OpenTelemetryCollector
 metadata:
-  name: simplest
+  name: otelcol
 spec:
   image: otel/opentelemetry-collector-contrib-dev:latest
-  mode: deployment
+  mode: daemonset
   serviceAccount: otel-collector
   env:
     - name: KUBE_NODE_NAME
