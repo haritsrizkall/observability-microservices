@@ -5,7 +5,7 @@ metadata:
   labels:
     app: payment
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: payment
@@ -16,14 +16,14 @@ spec:
     spec:
       containers:
         - name: payment
-          image: haritsrizkal/obs-micro-payment:1.0.0
+          image: haritsrizkal/obs-micro-payment:1.0.1
           ports:
             - containerPort: 3002
           env:
             - name: PORT
               value: "3002"
             - name: DATABASE_URL
-              value: "root:root@tcp(mysql.default.svc.cluster.local:3306)/payment?charset=utf8mb4&parseTime=True&loc=Local"
+              value: "root:root@tcp(mysql.app.svc.cluster.local:3306)/payment?charset=utf8mb4&parseTime=True&loc=Local"
             - name: OTLP_COLLECTOR_ENDPOINT
               value: "http://otelcol-collector.default.svc.cluster.local:4318"
 ---

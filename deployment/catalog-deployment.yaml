@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
-metadata: 
+metadata:
   name: catalog-deployment
-  labels: 
+  labels:
     app: catalog
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: catalog
@@ -16,14 +16,32 @@ spec:
     spec:
       containers:
         - name: catalog
-          image: haritsrizkal/obs-micro-catalog:1.0.1
-          ports: 
+          image: haritsrizkal/obs-micro-catalog:1.0.4
+          ports:
             - containerPort: 3004
           env:
             - name: PORT
               value: "3004"
             - name: DATABASE_URL
-              value: "mysql://root:root@mysql.default.svc.cluster.local:3306/catalog"
+              value: "mysql://root:root@mysql.app.svc.cluster.local:3306/catalog"
+            - name: OTEL_COLLECTOR_ENDPOINT
+              value: "http://otel-collector-collector.observability.svc.cluster.local:4318/v1/traces"
+            - name: IS_TRACING_ENABLED
+              value: "true"
+            - name: IS_ERROR_ENABLED
+              value: "false"
+            - name: IS_BOTTLENECK_ENABLED
+              value: "false"
+            - name: AUTH_SERVICE_URL
+              value: "http://auth-service.app.svc.cluster.local:3001/api/auth/"
+            - name: MERCHANT_SERVICE_URL
+              value: "http://merchant-service.app.svc.cluster.local:3003/api/merchant/"
+            - name: CATALOG_SERVICE_URL
+              value: "http://catalog-service.app.svc.cluster.local:3004/api/catalog/"
+            - name: ORDER_SERVICE_URL
+              value: "http://order-service.app.svc.cluster.local:3002/api/order/"
+            - name: PAYMENT_SERVICE_URL
+              value: "http://payment-service.app.svc.cluster.local:3005/api/payment/"
 ---
 apiVersion: v1
 kind: Service

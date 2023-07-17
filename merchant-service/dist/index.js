@@ -14,26 +14,50 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const tracer_1 = require("./pkg/tracer");
-(0, tracer_1.init)('merchant-service', 'development');
-const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+if (process.env.IS_TRACING_ENABLED == "true") {
+    (0, tracer_1.init)("merchant-service", "development");
+}
+const express_1 = __importDefault(require("express"));
 const client_1 = require("@prisma/client");
 const zod_1 = require("zod");
 const auth_1 = __importDefault(require("./services/auth"));
 const faker_1 = require("@faker-js/faker");
-dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = (_a = process.env.PORT) !== null && _a !== void 0 ? _a : 3001;
 const prisma = new client_1.PrismaClient();
 app.use(express_1.default.json());
-app.get('/', (req, res) => {
-    res.send('Express + TypeScript Server');
+app.get("/", (req, res) => {
+    res.send("Express + TypeScript Server");
 });
 const apiRouter = express_1.default.Router();
+const bottleNeckMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const isBottleNeck = process.env.IS_BOTTLENECK_ENABLED == "true";
+    if (!isBottleNeck) {
+        return next();
+    }
+    else {
+        yield new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+});
+const errorMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const isError = process.env.IS_ERROR_ENABLED == "true";
+    if (!isError) {
+        return next();
+    }
+    else {
+        return res.status(500).json({
+            message: "Internal Server Error - This is generated error for testing",
+        });
+    }
+});
+apiRouter.use(errorMiddleware);
+apiRouter.use(bottleNeckMiddleware);
 const createMerchantInput = zod_1.z.object({
     name: zod_1.z.string().min(3),
 });
-apiRouter.get('/faker-data', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.get("/faker-data", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const resp = yield auth_1.default.get(undefined, 200);
         for (let i = 0; i < 200; i++) {
@@ -42,13 +66,13 @@ apiRouter.get('/faker-data', (req, res) => __awaiter(void 0, void 0, void 0, fun
                     name: faker_1.faker.company.name(),
                     userId: resp.data.data[i].id,
                     levelId: 1,
-                }
+                },
             });
         }
     }
     catch (error) {
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: error,
             error_message: error.message,
         });
@@ -57,7 +81,7 @@ apiRouter.get('/faker-data', (req, res) => __awaiter(void 0, void 0, void 0, fun
         data: "All data created successfully",
     });
 }));
-apiRouter.post('/merchants', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.post("/merchants", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { name } = req.body;
         const { authorization } = req.headers;
@@ -74,7 +98,7 @@ apiRouter.post('/merchants', (req, res) => __awaiter(void 0, void 0, void 0, fun
             },
         });
         return res.status(200).json({
-            message: 'Merchant created successfully',
+            message: "Merchant created successfully",
             data: merchant,
         });
     }
@@ -87,12 +111,12 @@ apiRouter.post('/merchants', (req, res) => __awaiter(void 0, void 0, void 0, fun
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.get('/merchants', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.get("/merchants", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { authorization } = req.headers;
         const merchantPrism = yield prisma.merchant.findMany({
@@ -122,7 +146,7 @@ apiRouter.get('/merchants', (req, res) => __awaiter(void 0, void 0, void 0, func
             };
         });
         return res.status(200).json({
-            message: 'list of merchants',
+            message: "list of merchants",
             data: merchants,
         });
     }
@@ -135,25 +159,25 @@ apiRouter.get('/merchants', (req, res) => __awaiter(void 0, void 0, void 0, func
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.get('/merchants/in', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.get("/merchants/in", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { ids } = req.query;
+        let { ids, } = req.query;
         // convert to number of array
-        const idsArr = ids === null || ids === void 0 ? void 0 : ids.split(',').map((id) => Number(id));
+        const idsArr = ids === null || ids === void 0 ? void 0 : ids.split(",").map((id) => Number(id));
         const merchants = yield prisma.merchant.findMany({
             where: {
                 id: {
-                    in: idsArr
+                    in: idsArr,
                 },
             },
         });
         return res.status(200).json({
-            message: 'list of merchants',
+            message: "list of merchants",
             data: merchants,
         });
     }
@@ -166,12 +190,12 @@ apiRouter.get('/merchants/in', (req, res) => __awaiter(void 0, void 0, void 0, f
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.get('/merchants/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.get("/merchants/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
         const { authorization } = req.headers;
@@ -185,7 +209,7 @@ apiRouter.get('/merchants/:id', (req, res) => __awaiter(void 0, void 0, void 0, 
         });
         if (!merchantPrism) {
             return res.status(404).json({
-                message: 'Merchant not found',
+                message: "Merchant not found",
             });
         }
         const respUser = yield auth_1.default.getById(merchantPrism.userId, authorization);
@@ -207,7 +231,7 @@ apiRouter.get('/merchants/:id', (req, res) => __awaiter(void 0, void 0, void 0, 
         };
         // convert merchant to Merchant type
         return res.status(200).json({
-            message: 'list of merchants',
+            message: "list of merchants",
             data: merchant,
         });
     }
@@ -220,12 +244,12 @@ apiRouter.get('/merchants/:id', (req, res) => __awaiter(void 0, void 0, void 0, 
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.get('/public/merchants/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.get("/public/merchants/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
         let merchantPrism = yield prisma.merchant.findUnique({
@@ -240,17 +264,17 @@ apiRouter.get('/public/merchants/:id', (req, res) => __awaiter(void 0, void 0, v
                     select: {
                         id: true,
                         name: true,
-                    }
-                }
+                    },
+                },
             },
         });
         if (!merchantPrism) {
             return res.status(404).json({
-                message: 'Merchant not found',
+                message: "Merchant not found",
             });
         }
         return res.status(200).json({
-            message: 'Merchant fetched successfully',
+            message: "Merchant fetched successfully",
             data: merchantPrism,
         });
     }
@@ -263,12 +287,12 @@ apiRouter.get('/public/merchants/:id', (req, res) => __awaiter(void 0, void 0, v
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-app.use('/api/merchant', apiRouter);
+app.use("/api/merchant", apiRouter);
 app.listen(port, () => {
     console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
 });

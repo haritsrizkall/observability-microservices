@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
-const API_URL = "http://localhost:3001/api/auth/";
+const API_URL = process.env.AUTH_SERVICE_URL || "http://localhost:3001/api/auth/";
 const AuthService = {
     get: (token, count) => __awaiter(void 0, void 0, void 0, function* () {
         const response = yield axios_1.default.get(API_URL + "users", {
@@ -45,7 +45,7 @@ const AuthService = {
         return response;
     }),
     getById: (id, token) => __awaiter(void 0, void 0, void 0, function* () {
-        const response = yield axios_1.default.get(`${API_URL}/users/${id}`, {
+        const response = yield axios_1.default.get(`${API_URL}users/${id}`, {
             headers: {
                 Authorization: `${token}`,
             },
@@ -54,7 +54,7 @@ const AuthService = {
     }),
     getByIds: (ids, token) => __awaiter(void 0, void 0, void 0, function* () {
         let userIds = ids.join(",");
-        const response = yield axios_1.default.get(`${API_URL}/users/in`, {
+        const response = yield axios_1.default.get(`${API_URL}users/in`, {
             headers: {
                 Authorization: `${token}`,
             },
@@ -63,6 +63,6 @@ const AuthService = {
             },
         });
         return response;
-    })
+    }),
 };
 exports.default = AuthService;

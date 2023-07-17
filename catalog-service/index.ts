@@ -90,9 +90,14 @@ const bottleNeckMiddleware = async (req: Request, res: Response, next: any) => {
 };
 
 const errorMiddleware = async (req: Request, res: Response, next: any) => {
-  return res.status(500).json({
-    message: "Internal Server Error - This is generated error for testing",
-  });
+  const isError = process.env.IS_ERROR_ENABLED == "true";
+  if (!isError) {
+    return next();
+  } else {
+    return res.status(500).json({
+      message: "Internal Server Error - This is generated error for testing",
+    });
+  }
 };
 
 apiRouter.use(errorMiddleware);

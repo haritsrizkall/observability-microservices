@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 services:
   # auth:
   #   container_name: auth
@@ -47,17 +47,17 @@ services:
       - 14268:14268
       - 14250:14250
   prometheus:
-   image: prom/prometheus
-   container_name: prometheus
-   user: root
-   volumes:
-     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-     - ./prometheus/data:/prometheus
-   ports:
-     - 9090:9090
-   command: 
-     - '--config.file=/etc/prometheus/prometheus.yml'
-     - '--storage.tsdb.path=/prometheus'
+    image: prom/prometheus
+    container_name: prometheus
+    user: root
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/data:/prometheus
+    ports:
+      - 9090:9090
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -103,3 +103,18 @@ services:
     volumes:
       - ./otel-collector/config.yaml:/otel/config.yaml
     command: ["--config=/otel/config.yaml"]
+  auth-app:
+    image: haritsrizkal/obs-micro-auth:1.0.3
+    container_name: auth-app
+    ports:
+      - 3001:3001
+    depends_on:
+      - db
+    environment:
+      - port=3001
+      - DATABASE_URL=mysql://root:root@db:3306/auth
+      - INTERNAL_SECRET=hahaha
+      - OTEL_COLLECTOR_ENDPOINT=http://otel-collector:4318/v1/traces
+      - IS_TRACING_ENABLED=true
+      - IS_BOTTLENECK_ENABLED=false
+      - IS_ERROR_ENABLED=false

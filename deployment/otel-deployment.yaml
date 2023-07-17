@@ -32,12 +32,15 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: otel-collector
+    namespace: observability
+  - kind: ServiceAccount
+    name: otel-collector
     namespace: default
 ---
 apiVersion: opentelemetry.io/v1alpha1
 kind: OpenTelemetryCollector
 metadata:
-  name: otelcol
+  name: otel-collector
 spec:
   image: otel/opentelemetry-collector-contrib-dev:latest
   mode: daemonset

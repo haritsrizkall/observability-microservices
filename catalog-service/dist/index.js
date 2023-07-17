@@ -14,9 +14,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const tracer_1 = require("./pkg/tracer");
-(0, tracer_1.init)('catalog-service', 'development');
-const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+if (process.env.IS_TRACING_ENABLED == "true") {
+    (0, tracer_1.init)("catalog-service", "development");
+}
+const express_1 = __importDefault(require("express"));
 const client_1 = require("@prisma/client");
 const zod_1 = require("zod");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -28,10 +31,10 @@ const app = (0, express_1.default)();
 const port = (_a = process.env.PORT) !== null && _a !== void 0 ? _a : 3000;
 const prisma = new client_1.PrismaClient();
 app.use(express_1.default.json());
-app.get('/', (req, res) => {
-    res.send('Express + TypeScript Server');
+app.get("/", (req, res) => {
+    res.send("Express + TypeScript Server");
 });
-app.get('/faker-data', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get("/faker-data", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const merchantResp = yield merchant_1.default.getAll(undefined, 200);
     const merchants = merchantResp.data.data;
     for (let i = 0; i < merchants.length; i++) {
@@ -44,7 +47,7 @@ app.get('/faker-data', (req, res) => __awaiter(void 0, void 0, void 0, function*
                     price: parseFloat(faker_1.faker.commerce.price()),
                     merchantId: merchants[i].id,
                     categoryId: randomOneToThree,
-                }
+                },
             });
         }
     }
@@ -57,10 +60,10 @@ const authMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     const { authorization } = req.headers;
     if (!authorization) {
         return res.status(401).json({
-            message: 'Unauthorized',
+            message: "Unauthorized",
         });
     }
-    const token = authorization.split(' ')[1];
+    const token = authorization.split(" ")[1];
     try {
         const decoded = jsonwebtoken_1.default.verify(token, "skripsi-auth");
         req.userId = decoded.userId;
@@ -68,10 +71,32 @@ const authMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     }
     catch (err) {
         return res.status(401).json({
-            message: 'Unauthorized',
+            message: "Unauthorized",
         });
     }
 });
+const bottleNeckMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const isBottleNeck = process.env.IS_BOTTLENECK_ENABLED == "true";
+    if (!isBottleNeck) {
+        return next();
+    }
+    else {
+        yield new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+});
+const errorMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const isError = process.env.IS_ERROR_ENABLED == "true";
+    if (!isError) {
+        return next();
+    }
+    else {
+        return res.status(500).json({
+            message: "Internal Server Error - This is generated error for testing",
+        });
+    }
+});
+apiRouter.use(errorMiddleware);
+apiRouter.use(bottleNeckMiddleware);
 const createProductSchema = zod_1.z.object({
     name: zod_1.z.string(),
     description: zod_1.z.string(),
@@ -79,9 +104,9 @@ const createProductSchema = zod_1.z.object({
     merchantId: zod_1.z.number(),
     categoryId: zod_1.z.number(),
 });
-apiRouter.post('/products', authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.post("/products", authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _b;
-    const { name, description, price, merchantId, categoryId, } = req.body;
+    const { name, description, price, merchantId, categoryId } = req.body;
     const { authorization } = req.headers;
     try {
         yield createProductSchema.parseAsync({
@@ -96,7 +121,7 @@ apiRouter.post('/products', authMiddleware, (req, res) => __awaiter(void 0, void
         const merchant = merchantResp.data.data;
         if (merchant.userId !== req.userId) {
             return res.status(401).json({
-                message: 'Unauthorized',
+                message: "Unauthorized",
             });
         }
         // check if user authorized to create product
@@ -110,7 +135,7 @@ apiRouter.post('/products', authMiddleware, (req, res) => __awaiter(void 0, void
             },
         });
         return res.status(200).json({
-            message: 'Product created successfully',
+            message: "Product created successfully",
             data: product,
         });
     }
@@ -127,12 +152,12 @@ apiRouter.post('/products', authMiddleware, (req, res) => __awaiter(void 0, void
             return res.status(400).json(Object.assign({}, (_b = err.response) === null || _b === void 0 ? void 0 : _b.data));
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.get('/products', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.get("/products", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { authorization } = req.headers;
         const productsPrism = yield prisma.product.findMany({
@@ -151,7 +176,7 @@ apiRouter.get('/products', (req, res) => __awaiter(void 0, void 0, void 0, funct
                 } });
         });
         return res.status(200).json({
-            message: 'Products fetched successfully',
+            message: "Products fetched successfully",
             data: products,
         });
     }
@@ -164,16 +189,16 @@ apiRouter.get('/products', (req, res) => __awaiter(void 0, void 0, void 0, funct
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.get('/products/in', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.get("/products/in", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let { ids } = req.query;
         // convert to number of array
-        const idsArr = ids.split(',').map((id) => Number(id));
+        const idsArr = ids.split(",").map((id) => Number(id));
         const products = yield prisma.product.findMany({
             where: {
                 id: {
@@ -185,7 +210,7 @@ apiRouter.get('/products/in', (req, res) => __awaiter(void 0, void 0, void 0, fu
             },
         });
         return res.status(200).json({
-            message: 'Products fetched successfully',
+            message: "Products fetched successfully",
             data: products,
         });
     }
@@ -198,12 +223,12 @@ apiRouter.get('/products/in', (req, res) => __awaiter(void 0, void 0, void 0, fu
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.get('/products/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.get("/products/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _c;
     try {
         const { id } = req.params;
@@ -219,7 +244,7 @@ apiRouter.get('/products/:id', (req, res) => __awaiter(void 0, void 0, void 0, f
         const merchant = merchantResp.data.data;
         const productWithMerchant = Object.assign(Object.assign({}, product), { merchant: merchant });
         return res.status(200).json({
-            message: 'Product fetched successfully',
+            message: "Product fetched successfully",
             data: productWithMerchant,
         });
     }
@@ -232,12 +257,12 @@ apiRouter.get('/products/:id', (req, res) => __awaiter(void 0, void 0, void 0, f
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-app.use('/api/catalog', apiRouter);
+app.use("/api/catalog", apiRouter);
 app.listen(port, () => {
     console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
 });

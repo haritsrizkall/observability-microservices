@@ -5,7 +5,7 @@ metadata:
   labels:
     app: auth
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: auth
@@ -16,16 +16,22 @@ spec:
     spec:
       containers:
         - name: auth
-          image: haritsrizkal/obs-micro-auth:1.0.2
+          image: haritsrizkal/obs-micro-auth:1.0.3
           ports:
             - containerPort: 3001
           env:
             - name: PORT
               value: "3001"
             - name: DATABASE_URL
-              value: "mysql://root:root@mysql.default.svc.cluster.local:3306/auth"
+              value: "mysql://root:root@mysql.app.svc.cluster.local:3306/auth"
             - name: OTEL_COLLECTOR_ENDPOINT
-              value: "http://otelcol-collector.default.svc.cluster.local:4318/v1/traces"
+              value: "http://otel-collector-collector.observability.svc.cluster.local:4318/v1/traces"
+            - name: IS_TRACING_ENABLED
+              value: "true"
+            - name: IS_ERROR_ENABLED
+              value: "false"
+            - name: IS_BOTTLENECK_ENABLED
+              value: "false"
 ---
 apiVersion: v1
 kind: Service
