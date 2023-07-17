@@ -14,25 +14,50 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const tracer_1 = require("./pkg/tracer");
-(0, tracer_1.init)('order-service', 'development');
-const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+if (process.env.IS_TRACING_ENABLED == "true") {
+    (0, tracer_1.init)("order-service", "development");
+}
+const express_1 = __importDefault(require("express"));
 const client_1 = require("@prisma/client");
 const zod_1 = require("zod");
 const auth_1 = __importDefault(require("./services/auth"));
 const catalog_1 = __importDefault(require("./services/catalog"));
 const merchant_1 = __importDefault(require("./services/merchant"));
 const payment_1 = __importDefault(require("./services/payment"));
-const { trace } = require('@opentelemetry/api');
+const { trace } = require("@opentelemetry/api");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const port = (_a = process.env.PORT) !== null && _a !== void 0 ? _a : 3001;
 const prisma = new client_1.PrismaClient();
 app.use(express_1.default.json());
-app.get('/', (req, res) => {
-    res.send('Order Service');
+app.get("/", (req, res) => {
+    res.send("Order Service");
 });
 const apiRouter = express_1.default.Router();
+const bottleNeckMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const isBottleNeck = process.env.IS_BOTTLENECK_ENABLED == "true";
+    if (!isBottleNeck) {
+        return next();
+    }
+    else {
+        yield new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+});
+const errorMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const isError = process.env.IS_ERROR_ENABLED == "true";
+    if (!isError) {
+        return next();
+    }
+    else {
+        return res.status(500).json({
+            message: "Internal Server Error - This is generated error for testing",
+        });
+    }
+});
+apiRouter.use(errorMiddleware);
+apiRouter.use(bottleNeckMiddleware);
 const createOrderInput = zod_1.z.object({
     merchantId: zod_1.z.number(),
     orderItems: zod_1.z.array(zod_1.z.object({
@@ -40,7 +65,7 @@ const createOrderInput = zod_1.z.object({
         quantity: zod_1.z.number(),
     })),
 });
-apiRouter.post('/orders', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.post("/orders", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // const activeSpan = trace.getActiveSpan()
         // activeSpan.addEvent('create order')
@@ -52,7 +77,7 @@ apiRouter.post('/orders', (req, res) => __awaiter(void 0, void 0, void 0, functi
             merchantId,
             orderItems,
         });
-        // get user 
+        // get user
         let resp = yield auth_1.default.me(authorization);
         let user = resp.data.data;
         // currentSpan?.setAttribute("user", user.id)
@@ -91,7 +116,7 @@ apiRouter.post('/orders', (req, res) => __awaiter(void 0, void 0, void 0, functi
             subtotal += product.price * orderItem.quantity;
         }
         let taxPercent = 11;
-        let tax = subtotal * taxPercent / 100;
+        let tax = (subtotal * taxPercent) / 100;
         let total = subtotal + tax;
         // create order
         const newOrder = {
@@ -102,10 +127,13 @@ apiRouter.post('/orders', (req, res) => __awaiter(void 0, void 0, void 0, functi
             total,
             orderItems: {
                 create: orderItems.map((item) => ({
-                    name: products.find((product) => product.id == item.productId).name,
-                    price: products.find((product) => product.id == item.productId).price,
+                    name: products.find((product) => product.id == item.productId)
+                        .name,
+                    price: products.find((product) => product.id == item.productId)
+                        .price,
                     quantity: item.quantity,
-                    total: products.find((product) => product.id == item.productId).price * item.quantity,
+                    total: products.find((product) => product.id == item.productId)
+                        .price * item.quantity,
                 })),
             },
             status: client_1.OrderStatus.CREATED,
@@ -114,7 +142,7 @@ apiRouter.post('/orders', (req, res) => __awaiter(void 0, void 0, void 0, functi
             data: newOrder,
             include: {
                 orderItems: true,
-            }
+            },
         });
         console.log("kakkakaka");
         // create payment
@@ -152,12 +180,12 @@ apiRouter.post('/orders', (req, res) => __awaiter(void 0, void 0, void 0, functi
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.get('/orders/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.get("/orders/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
         const { authorization } = req.headers;
@@ -205,12 +233,12 @@ apiRouter.get('/orders/:id', (req, res) => __awaiter(void 0, void 0, void 0, fun
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.post('/orders/:id/cancel', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.post("/orders/:id/cancel", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
         const { authorization } = req.headers;
@@ -272,12 +300,12 @@ apiRouter.post('/orders/:id/cancel', (req, res) => __awaiter(void 0, void 0, voi
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.post('/orders/:id/paid', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.post("/orders/:id/paid", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
         const { authorization } = req.headers;
@@ -339,12 +367,12 @@ apiRouter.post('/orders/:id/paid', (req, res) => __awaiter(void 0, void 0, void 
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-apiRouter.post('/orders/:id/complete', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+apiRouter.post("/orders/:id/complete", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
         const { authorization } = req.headers;
@@ -406,12 +434,12 @@ apiRouter.post('/orders/:id/complete', (req, res) => __awaiter(void 0, void 0, v
             });
         }
         return res.status(500).json({
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
             errors: err,
         });
     }
 }));
-app.use('/api/order', apiRouter);
+app.use("/api/order", apiRouter);
 app.listen(port, () => {
     console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
 });

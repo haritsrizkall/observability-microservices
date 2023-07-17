@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
-const API_URL = "http://localhost:1323/api/payments";
+const API_URL = process.env.PAYMENT_SERVICE_URL || "http://localhost:1323/api/payments";
 const PaymentService = {
     create: (data, token) => __awaiter(void 0, void 0, void 0, function* () {
         const response = yield axios_1.default.post(`${API_URL}`, data, {
@@ -23,6 +23,6 @@ const PaymentService = {
         });
         console.log("response ", response);
         return response;
-    })
+    }),
 };
 exports.default = PaymentService;

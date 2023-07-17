@@ -10,15 +10,11 @@ const sdk_trace_node_1 = require("@opentelemetry/sdk-trace-node");
 const SimpleSpanProcessor_1 = require("@opentelemetry/sdk-trace-base/build/src/export/SimpleSpanProcessor");
 const instrumentation_2 = require("@prisma/instrumentation");
 const exporter_trace_otlp_http_1 = require("@opentelemetry/exporter-trace-otlp-http");
-//const hostName = 'localhost'
-const hostName = process.env.OTEL_TRACE_HOST || 'localhost';
-const options = {
-    endpoint: `http://localhost:14268/api/traces`,
-};
+const otelCollertorEndpoint = process.env.OTEL_COLLECTOR_ENDPOINT || 'http://localhost:4318/v1/traces';
 const init = (serviceName, environment) => {
     // const exporter = new JaegerExporter(options)
     const OTLPExporter = new exporter_trace_otlp_http_1.OTLPTraceExporter({
-        url: "http://localhost:4318/v1/traces"
+        url: otelCollertorEndpoint,
     });
     const provider = new sdk_trace_node_1.NodeTracerProvider({
         resource: new resources_1.Resource({
