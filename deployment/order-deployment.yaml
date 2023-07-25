@@ -16,12 +16,12 @@ spec:
     spec:
       containers:
         - name: order
-          image: haritsrizkal/obs-micro-order:1.0.2
+          image: haritsrizkal/obs-micro-order:1.0.3
           ports:
-            - containerPort: 3002
+            - containerPort: 3006
           env:
             - name: PORT
-              value: "3002"
+              value: "3006"
             - name: DATABASE_URL
               value: "mysql://root:root@mysql.app.svc.cluster.local:3306/order"
             - name: OTEL_COLLECTOR_ENDPOINT
@@ -39,9 +39,9 @@ spec:
             - name: CATALOG_SERVICE_URL
               value: "http://catalog-service.app.svc.cluster.local:3004/api/catalog/"
             - name: ORDER_SERVICE_URL
-              value: "http://order-service.app.svc.cluster.local:3002/api/order/"
+              value: "http://order-service.app.svc.cluster.local:3006/api/order/"
             - name: PAYMENT_SERVICE_URL
-              value: "http://payment-service.app.svc.cluster.local:3005/api/payment/"
+              value: "http://payment-service.app.svc.cluster.local:1323/api/payments"
 ---
 apiVersion: v1
 kind: Service
@@ -54,6 +54,6 @@ spec:
   selector:
     app: order
   ports:
-    - port: 3002
-      targetPort: 3002
+    - port: 3006
+      targetPort: 3006
       nodePort: 32764

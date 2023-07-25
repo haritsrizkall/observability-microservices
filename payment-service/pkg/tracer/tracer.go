@@ -2,6 +2,7 @@ package tracer
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"go.opentelemetry.io/otel"
@@ -38,5 +39,6 @@ func InitTracer() (*sdktrace.TracerProvider, error) {
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 	// set propagation
+	fmt.Println("Tracing enabled : ", otlpEndpoint)
 	return tp, nil
 }

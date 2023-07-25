@@ -16,16 +16,22 @@ spec:
     spec:
       containers:
         - name: payment
-          image: haritsrizkal/obs-micro-payment:1.0.1
+          image: haritsrizkal/obs-micro-payment:1.0.2
           ports:
-            - containerPort: 3002
+            - containerPort: 1323
           env:
             - name: PORT
-              value: "3002"
+              value: "1323"
             - name: DATABASE_URL
               value: "root:root@tcp(mysql.app.svc.cluster.local:3306)/payment?charset=utf8mb4&parseTime=True&loc=Local"
-            - name: OTLP_COLLECTOR_ENDPOINT
-              value: "http://otelcol-collector.default.svc.cluster.local:4318"
+            - name: OTEL_COLLECTOR_ENDPOINT
+              value: "otel-collector-collector.observability.svc.cluster.local:4318"
+            - name: IS_TRACING_ENABLED
+              value: "true"
+            - name: IS_ERROR_ENABLED
+              value: "false"
+            - name: IS_BOTTLENECK_ENABLED
+              value: "false"
 ---
 apiVersion: v1
 kind: Service

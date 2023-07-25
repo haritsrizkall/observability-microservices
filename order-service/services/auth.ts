@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_URL =
-  process.env.ORDER_SERVICE_URL || "http://localhost:3001/api/auth/";
+  process.env.AUTH_SERVICE_URL || "http://localhost:3001/api/auth/";
 
 const AuthService = {
   login: async (email: string, password: string) => {
