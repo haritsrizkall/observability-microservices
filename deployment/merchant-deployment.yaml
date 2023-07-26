@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: merchant
-          image: haritsrizkal/obs-micro-merchant:1.0.4
+          image: haritsrizkal/obs-micro-merchant:1.0.5
           ports:
             - containerPort: 3003
           env:
