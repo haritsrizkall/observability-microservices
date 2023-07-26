@@ -7,6 +7,16 @@ spec:
   nodeSets:
     - name: default
       count: 1
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 5Gi
+            storageClassName: hostpath
       config:
         node.store.allow_mmap: false
   # http:

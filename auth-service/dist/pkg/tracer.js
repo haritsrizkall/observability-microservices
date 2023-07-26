@@ -7,7 +7,6 @@ const instrumentation_express_1 = require("@opentelemetry/instrumentation-expres
 const instrumentation_http_1 = require("@opentelemetry/instrumentation-http");
 const instrumentation_1 = require("@opentelemetry/instrumentation");
 const sdk_trace_node_1 = require("@opentelemetry/sdk-trace-node");
-const SimpleSpanProcessor_1 = require("@opentelemetry/sdk-trace-base/build/src/export/SimpleSpanProcessor");
 const instrumentation_2 = require("@prisma/instrumentation");
 const exporter_trace_otlp_http_1 = require("@opentelemetry/exporter-trace-otlp-http");
 const otelCollertorEndpoint = process.env.OTEL_COLLECTOR_ENDPOINT || "http://localhost:4318/v1/traces";
@@ -23,7 +22,7 @@ const init = (serviceName, environment) => {
         }),
     });
     // Use the BatchSpanProcessor to export spans in batches in order to more efficiently use resources.
-    provider.addSpanProcessor(new SimpleSpanProcessor_1.SimpleSpanProcessor(OTLPExporter));
+    provider.addSpanProcessor(new sdk_trace_node_1.BatchSpanProcessor(OTLPExporter));
     // Enable to see the spans printed in the console by the ConsoleSpanExporter
     provider.register();
     console.log("tracing initialized");

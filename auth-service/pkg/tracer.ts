@@ -3,7 +3,10 @@ import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions"
 import { ExpressInstrumentation } from "@opentelemetry/instrumentation-express";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { registerInstrumentations } from "@opentelemetry/instrumentation";
-import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
+import {
+  BatchSpanProcessor,
+  NodeTracerProvider,
+} from "@opentelemetry/sdk-trace-node";
 import { SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base/build/src/export/SimpleSpanProcessor";
 import { PrismaInstrumentation } from "@prisma/instrumentation";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
@@ -25,7 +28,7 @@ export const init = (serviceName: any, environment: any) => {
   });
 
   // Use the BatchSpanProcessor to export spans in batches in order to more efficiently use resources.
-  provider.addSpanProcessor(new SimpleSpanProcessor(OTLPExporter));
+  provider.addSpanProcessor(new BatchSpanProcessor(OTLPExporter));
 
   // Enable to see the spans printed in the console by the ConsoleSpanExporter
 

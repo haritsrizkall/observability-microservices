@@ -23,11 +23,11 @@ spec:
             - name: PORT
               value: "3001"
             - name: DATABASE_URL
-              value: "mysql://root:root@mysql.default.svc.cluster.local:3306/auth"
+              value: "mysql://root:root@mysql.app.svc.cluster.local:3306/auth"
             - name: OTEL_COLLECTOR_ENDPOINT
               value: "http://otel-collector-collector.observability.svc.cluster.local:4318/v1/traces"
             - name: IS_TRACING_ENABLED
-              value: "true"
+              value: "false"
             - name: IS_ERROR_ENABLED
               value: "false"
             - name: IS_BOTTLENECK_ENABLED
