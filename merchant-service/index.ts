@@ -31,6 +31,7 @@ const bottleNeckMiddleware = async (req: Request, res: Response, next: any) => {
     return next();
   } else {
     await new Promise((resolve) => setTimeout(resolve, 5000));
+    return next();
   }
 };
 

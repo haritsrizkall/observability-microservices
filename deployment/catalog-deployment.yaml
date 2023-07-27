@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: catalog
-          image: haritsrizkal/obs-micro-catalog:1.0.5
+          image: haritsrizkal/obs-micro-catalog:1.0.6
           ports:
             - containerPort: 3004
           env:
@@ -31,7 +31,7 @@ spec:
             - name: IS_ERROR_ENABLED
               value: "false"
             - name: IS_BOTTLENECK_ENABLED
-              value: "false"
+              value: "true"
             - name: AUTH_SERVICE_URL
               value: "http://auth-service.app.svc.cluster.local:3001/api/auth/"
             - name: MERCHANT_SERVICE_URL

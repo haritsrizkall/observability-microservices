@@ -67,14 +67,6 @@ spec:
     processors:
       batch:
         timeout: 10s
-      attributes/example:
-        actions:
-          - key: rizkal
-            value: ganteng
-            action: upsert
-          - key: k8s.pod.name
-            from_attribute: k8s.pod.name
-            action: upsert
       k8sattributes:
         auth_type: serviceAccount
         passthrough: false
@@ -94,5 +86,5 @@ spec:
       pipelines:
         traces:
           receivers: [otlp]
-          processors: [k8sattributes, batch, attributes/example]
+          processors: [k8sattributes, batch]
           exporters: [logging, jaeger]
