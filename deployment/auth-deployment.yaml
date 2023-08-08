@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: auth
-          image: haritsrizkal/obs-micro-auth:1.0.5
+          image: haritsrizkal/obs-micro-auth:1.0.6
           ports:
             - containerPort: 3001
           env:
