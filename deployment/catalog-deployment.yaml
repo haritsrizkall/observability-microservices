@@ -42,6 +42,8 @@ spec:
               value: "http://order-service.app.svc.cluster.local:3002/api/order/"
             - name: PAYMENT_SERVICE_URL
               value: "http://payment-service.app.svc.cluster.local:3005/api/payment/"
+            - name: OTEL_SAMPLING_RATIO
+              value: "1"
 ---
 apiVersion: v1
 kind: Service
