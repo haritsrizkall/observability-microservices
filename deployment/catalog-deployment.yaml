@@ -31,7 +31,7 @@ spec:
             - name: IS_ERROR_ENABLED
               value: "false"
             - name: IS_BOTTLENECK_ENABLED
-              value: "true"
+              value: "false"
             - name: AUTH_SERVICE_URL
               value: "http://auth-service.app.svc.cluster.local:3001/api/auth/"
             - name: MERCHANT_SERVICE_URL

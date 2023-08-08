@@ -1,5 +1,6 @@
 import {
   BatchSpanProcessor,
+  ParentBasedSampler,
   TraceIdRatioBasedSampler,
 } from "@opentelemetry/sdk-trace-base";
 import { Resource } from "@opentelemetry/resources";
@@ -21,7 +22,7 @@ const otelCollertorEndpoint =
   process.env.OTEL_COLLECTOR_ENDPOINT || "http://localhost:4318/v1/traces";
 
 export const init = (serviceName: any, environment: any) => {
-  // const exporter = new JaegerExporter(options)
+  const samplingRatio = Number(process.env.OTEL_SAMPLING_RATIO) || 0.1;
   const OTLPExporter = new OTLPTraceExporter({
     url: otelCollertorEndpoint,
   });
@@ -30,6 +31,9 @@ export const init = (serviceName: any, environment: any) => {
     resource: new Resource({
       [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
       [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: environment,
+    }),
+    sampler: new ParentBasedSampler({
+      root: new TraceIdRatioBasedSampler(samplingRatio),
     }),
   });
 
@@ -41,12 +45,12 @@ export const init = (serviceName: any, environment: any) => {
   // provider.register()
   provider.register();
 
-  console.log("tracing initialized");
+  console.log("tracing initialized with sampleratio: ", samplingRatio);
 
   registerInstrumentations({
     instrumentations: [
-      new ExpressInstrumentation(),
       new HttpInstrumentation(),
+      new ExpressInstrumentation(),
       new PrismaInstrumentation(),
     ],
     tracerProvider: provider,

@@ -27,6 +27,7 @@ const faker_1 = require("@faker-js/faker");
 const app = (0, express_1.default)();
 const portExpress = (_a = process.env.PORT) !== null && _a !== void 0 ? _a : 3000;
 const prisma = new client_1.PrismaClient();
+console.log("special edition 1 span");
 app.use(express_1.default.json());
 app.get("/faker-data", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -63,28 +64,22 @@ app.get("/", (req, res) => {
 });
 const apiRouter = express_1.default.Router();
 const bottleNeckMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const isBottleNeck = process.env.IS_BOTTLENECK_ENABLED == "true";
-    if (!isBottleNeck) {
-        return next();
-    }
-    else {
-        yield new Promise((resolve) => setTimeout(resolve, 5000));
-        return next();
-    }
+    yield new Promise((resolve) => setTimeout(resolve, 5000));
+    return next();
 });
 const errorMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const isError = process.env.IS_ERROR_ENABLED == "true";
-    if (!isError) {
-        return next();
-    }
-    else {
-        return res.status(500).json({
-            message: "Internal Server Error - This is generated error for testing",
-        });
-    }
+    return res.status(500).json({
+        message: "Internal Server Error - This is generated error for testing",
+    });
 });
-apiRouter.use(errorMiddleware);
-apiRouter.use(bottleNeckMiddleware);
+const isError = process.env.IS_ERROR_ENABLED == "true";
+const isBottleNeck = process.env.IS_BOTTLENECK_ENABLED == "true";
+if (isError) {
+    apiRouter.use(errorMiddleware);
+}
+if (isBottleNeck) {
+    apiRouter.use(bottleNeckMiddleware);
+}
 const registerInput = zod_1.z.object({
     name: zod_1.z.string().min(3),
     email: zod_1.z.string().email(),

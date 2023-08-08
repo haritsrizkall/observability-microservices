@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -28,6 +29,9 @@ func InitTracer() (*sdktrace.TracerProvider, error) {
 	if err != nil {
 		return nil, err
 	}
+	samplingRatioInt, _ := strconv.Atoi(os.Getenv("OTEL_SAMPLING_RATIO"))
+	samplingRatio := float64(samplingRatioInt)
+
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(otlpExporter),
 		sdktrace.WithResource(resource.NewWithAttributes(
@@ -35,10 +39,15 @@ func InitTracer() (*sdktrace.TracerProvider, error) {
 			semconv.ServiceName(ServiceName),
 			attribute.String("environment", "development"),
 		)),
+		sdktrace.WithSampler(
+			sdktrace.ParentBased(
+				sdktrace.TraceIDRatioBased(samplingRatio),
+			),
+		),
 	)
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 	// set propagation
-	fmt.Println("Tracing enabled : ", otlpEndpoint)
+	fmt.Printf("Tracing enabled : %s with sampling ratio %f", otlpEndpoint, samplingRatio)
 	return tp, nil
 }

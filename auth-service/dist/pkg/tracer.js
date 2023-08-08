@@ -12,6 +12,7 @@ const exporter_trace_otlp_http_1 = require("@opentelemetry/exporter-trace-otlp-h
 const otelCollertorEndpoint = process.env.OTEL_COLLECTOR_ENDPOINT || "http://localhost:4318/v1/traces";
 const init = (serviceName, environment) => {
     // const exporter = new JaegerExporter(options)
+    const samplingRatio = Number(process.env.OTEL_SAMPLING_RATIO) || 0.1;
     const OTLPExporter = new exporter_trace_otlp_http_1.OTLPTraceExporter({
         url: otelCollertorEndpoint,
     });
@@ -20,16 +21,20 @@ const init = (serviceName, environment) => {
             [semantic_conventions_1.SemanticResourceAttributes.SERVICE_NAME]: serviceName,
             [semantic_conventions_1.SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: environment,
         }),
+        sampler: new sdk_trace_node_1.ParentBasedSampler({
+            root: new sdk_trace_node_1.TraceIdRatioBasedSampler(samplingRatio),
+        }),
     });
     // Use the BatchSpanProcessor to export spans in batches in order to more efficiently use resources.
     provider.addSpanProcessor(new sdk_trace_node_1.BatchSpanProcessor(OTLPExporter));
     // Enable to see the spans printed in the console by the ConsoleSpanExporter
+    provider.addSpanProcessor(new sdk_trace_node_1.SimpleSpanProcessor(new sdk_trace_node_1.ConsoleSpanExporter()));
     provider.register();
-    console.log("tracing initialized");
+    console.log("tracing initialized with sampleratio: ", samplingRatio);
     (0, instrumentation_1.registerInstrumentations)({
         instrumentations: [
-            new instrumentation_express_1.ExpressInstrumentation(),
             new instrumentation_http_1.HttpInstrumentation(),
+            new instrumentation_express_1.ExpressInstrumentation(),
             new instrumentation_2.PrismaInstrumentation(),
         ],
         tracerProvider: provider,
