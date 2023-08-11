@@ -55,18 +55,18 @@ spec:
     receivers:
       otlp:
         protocols:
-          grpc:
           http:
     exporters:
       logging:
-        loglevel: debug
+        loglevel: warn
       jaeger:
-        endpoint: http://jaeger-collector.observability.svc.cluster.local:14250
+        endpoint: http://jaeger-collector-headless.observability.svc.cluster.local:14250
         tls:
           insecure: true
     processors:
       batch:
         timeout: 10s
+        send_batch_max_size: 10000
       k8sattributes:
         auth_type: serviceAccount
         passthrough: false

@@ -21,6 +21,8 @@ var Tracer = otel.Tracer(ServiceName)
 
 func InitTracer() (*sdktrace.TracerProvider, error) {
 	otlpEndpoint := os.Getenv("OTEL_COLLECTOR_ENDPOINT")
+	maxQueueSize := os.Getenv("OTEL_MAX_QUEUE_SIZE")
+	maxExportBatchSize := os.Getenv("OTEL_MAX_EXPORT_BATCH_SIZE")
 	client := otlptracehttp.NewClient(
 		otlptracehttp.WithEndpoint(otlpEndpoint),
 		otlptracehttp.WithInsecure(),
@@ -32,8 +34,11 @@ func InitTracer() (*sdktrace.TracerProvider, error) {
 	samplingRatioInt, _ := strconv.Atoi(os.Getenv("OTEL_SAMPLING_RATIO"))
 	samplingRatio := float64(samplingRatioInt)
 
+	maxQueueSizeInt, _ := strconv.Atoi(maxQueueSize)
+	maxExportBatchSizeInt, _ := strconv.Atoi(maxExportBatchSize)
+
 	tp := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(otlpExporter),
+		sdktrace.WithBatcher(otlpExporter, sdktrace.WithMaxQueueSize(maxQueueSizeInt), sdktrace.WithMaxExportBatchSize(maxExportBatchSizeInt)),
 		sdktrace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceName(ServiceName),

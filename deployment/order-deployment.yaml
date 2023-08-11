@@ -5,7 +5,7 @@ metadata:
   labels:
     app: order
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: order
@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: order
-          image: haritsrizkal/obs-micro-order:1.0.6
+          image: haritsrizkal/obs-micro-order:1.0.7
           ports:
             - containerPort: 3006
           env:
@@ -44,6 +44,10 @@ spec:
               value: "http://payment-service.app.svc.cluster.local:1323/api/payments"
             - name: OTEL_SAMPLING_RATIO
               value: "1"
+            - name: OTEL_MAX_QUEUE_SIZE
+              value: "1000"
+            - name: OTEL_MAX_EXPORT_BATCH_SIZE
+              value: "512"
 ---
 apiVersion: v1
 kind: Service

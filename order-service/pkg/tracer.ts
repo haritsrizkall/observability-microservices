@@ -17,15 +17,20 @@ import { MySQLInstrumentation } from "@opentelemetry/instrumentation-mysql";
 import MySQL2Instrumentation from "@opentelemetry/instrumentation-mysql2";
 import { PrismaInstrumentation } from "@prisma/instrumentation";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import { DiagConsoleLogger, DiagLogLevel, diag } from "@opentelemetry/api";
 
 const otelCollertorEndpoint =
   process.env.OTEL_COLLECTOR_ENDPOINT || "http://localhost:4318/v1/traces";
 
 export const init = (serviceName: any, environment: any) => {
   const samplingRatio = Number(process.env.OTEL_SAMPLING_RATIO) || 0.1;
+  const maxQueueSize = Number(process.env.OTEL_MAX_QUEUE_SIZE) || 2048;
+  const maxExportBatchSize =
+    Number(process.env.OTEL_MAX_EXPORT_BATCH_SIZE) || 512;
   const OTLPExporter = new OTLPTraceExporter({
     url: otelCollertorEndpoint,
   });
+  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.WARN);
 
   const provider = new NodeTracerProvider({
     resource: new Resource({
@@ -38,7 +43,12 @@ export const init = (serviceName: any, environment: any) => {
   });
 
   // Use the BatchSpanProcessor to export spans in batches in order to more efficiently use resources.
-  provider.addSpanProcessor(new BatchSpanProcessor(OTLPExporter));
+  provider.addSpanProcessor(
+    new BatchSpanProcessor(OTLPExporter, {
+      maxQueueSize: maxQueueSize,
+      maxExportBatchSize: maxExportBatchSize,
+    })
+  );
 
   // Enable to see the spans printed in the console by the ConsoleSpanExporter
 

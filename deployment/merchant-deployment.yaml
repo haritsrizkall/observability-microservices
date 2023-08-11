@@ -5,7 +5,7 @@ metadata:
   labels:
     app: merchant
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: merchant
@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: merchant
-          image: haritsrizkal/obs-micro-merchant:1.0.7
+          image: haritsrizkal/obs-micro-merchant:1.0.8
           ports:
             - containerPort: 3003
           env:
@@ -44,6 +44,10 @@ spec:
               value: "http://payment-service.app.svc.cluster.local:3005/api/payment/"
             - name: OTEL_SAMPLING_RATIO
               value: "1"
+            - name: OTEL_MAX_QUEUE_SIZE
+              value: "1000"
+            - name: OTEL_MAX_EXPORT_BATCH_SIZE
+              value: "512"
 ---
 apiVersion: v1
 kind: Service

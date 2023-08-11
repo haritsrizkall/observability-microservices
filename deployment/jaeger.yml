@@ -4,6 +4,13 @@ metadata:
   name: jaeger
 spec:
   strategy: production
+  collector:
+    replicas: 1
+    image: jaegertracing/jaeger-collector
+    options:
+      collector:
+        num-workers: 200
+        queue-size: 11000
   storage:
     type: elasticsearch # <1>
     options:
