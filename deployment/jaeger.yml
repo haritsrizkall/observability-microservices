@@ -9,8 +9,8 @@ spec:
     image: jaegertracing/jaeger-collector
     options:
       collector:
-        num-workers: 200
-        queue-size: 11000
+        num-workers: 50
+        queue-size: 10000
   storage:
     type: elasticsearch # <1>
     options:
@@ -31,6 +31,3 @@ spec:
         secretName: quickstart-es-http-certs-public
   ingress:
     enabled: true
-
-  # pcrb4xWmw7z10G106hRuK144
-  # kubectl create secret generic jaeger-secret --from-literal=ES_PASSWORD=c6kKnoYrfEs107SV4X17116N --from-literal=ES_USERNAME=elastic -n observability

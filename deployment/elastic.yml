@@ -15,7 +15,7 @@ spec:
               - ReadWriteOnce
             resources:
               requests:
-                storage: 5Gi
+                storage: 1Gi
             storageClassName: hostpath
       config:
         node.store.allow_mmap: false
@@ -24,16 +24,16 @@ spec:
   #     selfSignedCertificate:
   #       disabled: true
 ---
-apiVersion: kibana.k8s.elastic.co/v1
-kind: Kibana
-metadata:
-  name: quickstart
-spec:
-  version: 7.7.0
-  # http:
-  #   tls:
-  #     selfSignedCertificate:
-  #       disabled: true
-  count: 1
-  elasticsearchRef:
-    name: quickstart
+# apiVersion: kibana.k8s.elastic.co/v1
+# kind: Kibana
+# metadata:
+#   name: quickstart
+# spec:
+#   version: 7.7.0
+#   # http:
+#   #   tls:
+#   #     selfSignedCertificate:
+#   #       disabled: true
+#   count: 1
+#   elasticsearchRef:
+#     name: quickstart

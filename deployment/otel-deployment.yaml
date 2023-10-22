@@ -42,7 +42,7 @@ kind: OpenTelemetryCollector
 metadata:
   name: otel-collector
 spec:
-  image: otel/opentelemetry-collector-contrib-dev:latest
+  image: otel/opentelemetry-collector-contrib-dev:40d81762821c81f4d7b257934ba33ea606036fcd
   mode: daemonset
   serviceAccount: otel-collector
   env:
@@ -56,6 +56,7 @@ spec:
       otlp:
         protocols:
           http:
+          grpc: 
     exporters:
       logging:
         loglevel: warn
@@ -65,7 +66,7 @@ spec:
           insecure: true
     processors:
       batch:
-        timeout: 10s
+        timeout: 2s
         send_batch_max_size: 10000
       k8sattributes:
         auth_type: serviceAccount

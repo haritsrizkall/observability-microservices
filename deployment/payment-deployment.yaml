@@ -27,7 +27,7 @@ spec:
             - name: OTEL_COLLECTOR_ENDPOINT
               value: "otel-collector-collector.observability.svc.cluster.local:4318"
             - name: IS_TRACING_ENABLED
-              value: "true"
+              value: "false"
             - name: IS_ERROR_ENABLED
               value: "false"
             - name: IS_BOTTLENECK_ENABLED
@@ -35,9 +35,9 @@ spec:
             - name: OTEL_SAMPLING_RATIO
               value: "1"
             - name: OTEL_MAX_QUEUE_SIZE
-              value: "1000"
+              value: "10000"
             - name: OTEL_MAX_EXPORT_BATCH_SIZE
-              value: "512"
+              value: "5000"
 ---
 apiVersion: v1
 kind: Service

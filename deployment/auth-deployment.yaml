@@ -35,9 +35,9 @@ spec:
             - name: OTEL_SAMPLING_RATIO
               value: "1"
             - name: OTEL_MAX_QUEUE_SIZE
-              value: "100000"
-            - name: OTEL_MAX_EXPORT_BATCH_SIZE
               value: "10000"
+            - name: OTEL_MAX_EXPORT_BATCH_SIZE
+              value: "5000"
             - name: OTEL_LOG_LEVEL
               value: "60"
 ---

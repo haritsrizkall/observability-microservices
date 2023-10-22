@@ -2,7 +2,6 @@ package tracer
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strconv"
 
@@ -38,7 +37,10 @@ func InitTracer() (*sdktrace.TracerProvider, error) {
 	maxExportBatchSizeInt, _ := strconv.Atoi(maxExportBatchSize)
 
 	tp := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(otlpExporter, sdktrace.WithMaxQueueSize(maxQueueSizeInt), sdktrace.WithMaxExportBatchSize(maxExportBatchSizeInt)),
+		sdktrace.WithBatcher(
+			otlpExporter,
+			sdktrace.WithMaxQueueSize(maxQueueSizeInt),
+			sdktrace.WithMaxExportBatchSize(maxExportBatchSizeInt)),
 		sdktrace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceName(ServiceName),
@@ -51,8 +53,11 @@ func InitTracer() (*sdktrace.TracerProvider, error) {
 		),
 	)
 	otel.SetTracerProvider(tp)
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
-	// set propagation
-	fmt.Printf("Tracing enabled : %s with sampling ratio %f", otlpEndpoint, samplingRatio)
+	otel.SetTextMapPropagator(
+		propagation.NewCompositeTextMapPropagator(
+			propagation.TraceContext{},
+			propagation.Baggage{},
+		),
+	)
 	return tp, nil
 }

@@ -5,10 +5,8 @@ import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { registerInstrumentations } from "@opentelemetry/instrumentation";
 import {
   BatchSpanProcessor,
-  ConsoleSpanExporter,
   NodeTracerProvider,
   ParentBasedSampler,
-  SimpleSpanProcessor,
   TraceIdRatioBasedSampler,
 } from "@opentelemetry/sdk-trace-node";
 import { PrismaInstrumentation } from "@prisma/instrumentation";
@@ -19,7 +17,6 @@ const otelCollertorEndpoint =
   process.env.OTEL_COLLECTOR_ENDPOINT || "http://localhost:4318/v1/traces";
 
 export const init = (serviceName: any, environment: any) => {
-  // const exporter = new JaegerExporter(options)
   const samplingRatio = Number(process.env.OTEL_SAMPLING_RATIO) || 0.1;
   const maxQueueSize = Number(process.env.OTEL_MAX_QUEUE_SIZE) || 2048;
   const maxExportBatchSize =
@@ -40,7 +37,6 @@ export const init = (serviceName: any, environment: any) => {
     }),
   });
 
-  // Use the BatchSpanProcessor to export spans in batches in order to more efficiently use resources.
   provider.addSpanProcessor(
     new BatchSpanProcessor(OTLPExporter, {
       maxQueueSize: maxQueueSize,
@@ -49,8 +45,6 @@ export const init = (serviceName: any, environment: any) => {
   );
 
   provider.register();
-
-  console.log("tracing initialized with sampleratio: ", samplingRatio);
 
   registerInstrumentations({
     instrumentations: [
